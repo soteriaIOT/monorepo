@@ -10,7 +10,7 @@ import (
 
 func main() {
 	// Load the Shared AWS Configuration (~/.aws/config)
-	cfg, err := config.LoadDefaultConfig(context.TODO() , config.WithRegion("us-west-2"))
+	cfg, err := config.LoadDefaultConfig(context.TODO() , config.WithRegion("us-east-2"))
 	if err != nil {
 		log.Fatal(err)
 	}
