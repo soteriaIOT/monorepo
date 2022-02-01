@@ -5,25 +5,24 @@ package graph
 
 import (
 	"context"
-	"fmt"
 
-	"github.com/soteriaIOT/monorepo/application-server/graph/generated"
-	"github.com/soteriaIOT/monorepo/application-server/graph/model"
+	"github.com/arora-aditya/monorepo/application-server/graph/generated"
+	"github.com/arora-aditya/monorepo/application-server/graph/model"
 )
 
-func (r *mutationResolver) CreateTodo(ctx context.Context, input model.NewTodo) (*model.Todo, error) {
-	panic(fmt.Errorf("not implemented"))
+func (r *queryResolver) Vulnerabilities(ctx context.Context) ([]*model.Vulnerability, error) {
+	return r.Resolver.Vulnerabilities, nil
 }
 
-func (r *queryResolver) Todos(ctx context.Context) ([]*model.Todo, error) {
-	panic(fmt.Errorf("not implemented"))
+func (r *queryResolver) Devices(ctx context.Context) ([]*model.Device, error) {
+	return r.Resolver.Devices, nil
 }
 
-// Mutation returns generated.MutationResolver implementation.
-func (r *Resolver) Mutation() generated.MutationResolver { return &mutationResolver{r} }
+func (r *queryResolver) Images(ctx context.Context) ([]*model.Image, error) {
+	return r.Resolver.Images, nil
+}
 
 // Query returns generated.QueryResolver implementation.
 func (r *Resolver) Query() generated.QueryResolver { return &queryResolver{r} }
 
-type mutationResolver struct{ *Resolver }
 type queryResolver struct{ *Resolver }

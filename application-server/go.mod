@@ -1,4 +1,4 @@
-module github.com/soteriaIOT/monorepo/application-server
+module github.com/arora-aditya/monorepo/application-server
 
 go 1.17
 

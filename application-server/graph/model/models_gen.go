@@ -2,19 +2,27 @@
 
 package model
 
-type NewTodo struct {
-	Text   string `json:"text"`
-	UserID string `json:"userId"`
+type Dependency struct {
+	ID      string `json:"id"`
+	Name    string `json:"name"`
+	Version string `json:"version"`
 }
 
-type Todo struct {
-	ID   string `json:"id"`
-	Text string `json:"text"`
-	Done bool   `json:"done"`
-	User *User  `json:"user"`
+type Device struct {
+	ID    string `json:"id"`
+	Name  string `json:"name"`
+	Image *Image `json:"image"`
 }
 
-type User struct {
-	ID   string `json:"id"`
-	Name string `json:"name"`
+type Image struct {
+	ID           string        `json:"id"`
+	Repository   string        `json:"repository"`
+	Tag          string        `json:"tag"`
+	Dependencies []*Dependency `json:"dependencies"`
+}
+
+type Vulnerability struct {
+	ID          string      `json:"id"`
+	Description string      `json:"description"`
+	Dependency  *Dependency `json:"dependency"`
 }
