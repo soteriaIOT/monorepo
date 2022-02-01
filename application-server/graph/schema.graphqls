@@ -1,28 +1,30 @@
-# GraphQL schema example
-#
-# https://gqlgen.com/getting-started/
-
-type Todo {
+type Vulnerability {
   id: ID!
-  text: String!
-  done: Boolean!
-  user: User!
+  description: String!
+  dependency: Dependency!
 }
 
-type User {
+type Dependency {
   id: ID!
   name: String!
+  version: String!
+}
+
+type Image {
+  id: ID!
+  repository: String!
+  tag: String!
+  dependencies: [Dependency!]!
+}
+
+type Device {
+  id: ID!
+  name: String!
+  image: Image!
 }
 
 type Query {
-  todos: [Todo!]!
-}
-
-input NewTodo {
-  text: String!
-  userId: String!
-}
-
-type Mutation {
-  createTodo(input: NewTodo!): Todo!
+  vulnerabilities: [Vulnerability!]!
+  devices: [Device!]!
+  images: [Image!]!
 }
