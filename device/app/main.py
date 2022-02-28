@@ -65,6 +65,7 @@ def get_device_stats():
     )
 
 def send_metrics():
+    return
     weather_data = get_weather(WATERLOO)
     wifi_data = get_wifi()
     device_data = get_device_stats()
