@@ -1,7 +1,22 @@
+enum Severity {
+  LOW, MODERATE, HIGH
+}
+
 type Vulnerability {
+  # These fields are from https://github.com/arora-aditya/monorepo/blob/dependabot/vulnerability/query_github/frontend_data.json
+  permalink: String!
+  severity: Severity! # note that this will be one of "LOW, MODERATE,HIGH"
+  summary: String!
+  vulnerable_version_range: String!
+  patch_available: Boolean!
+  key_is_patched: Boolean!
   id: ID!
-  description: String!
-  dependency: Dependency!
+
+  # These fields are from https://github.com/arora-aditya/monorepo/blob/dependabot/vulnerability/query_github/dependabot_data.json
+  dependencies: [Dependency!]! # this is the dependency name
+  patched_versions: [String!]!
+  unaffected_versions: [String!]!
+  affected_versions: [String!]!
 }
 
 type Dependency {

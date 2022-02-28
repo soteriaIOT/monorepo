@@ -2,6 +2,12 @@
 
 package model
 
+import (
+	"fmt"
+	"io"
+	"strconv"
+)
+
 type Dependency struct {
 	ID      string `json:"id"`
 	Name    string `json:"name"`
@@ -22,7 +28,58 @@ type Image struct {
 }
 
 type Vulnerability struct {
-	ID          string      `json:"id"`
-	Description string      `json:"description"`
-	Dependency  *Dependency `json:"dependency"`
+	Permalink              string        `json:"permalink"`
+	Severity               Severity      `json:"severity"`
+	Summary                string        `json:"summary"`
+	VulnerableVersionRange string        `json:"vulnerable_version_range"`
+	PatchAvailable         bool          `json:"patch_available"`
+	KeyIsPatched           bool          `json:"key_is_patched"`
+	ID                     string        `json:"id"`
+	Dependencies           []*Dependency `json:"dependencies"`
+	PatchedVersions        []string      `json:"patched_versions"`
+	UnaffectedVersions     []string      `json:"unaffected_versions"`
+	AffectedVersions       []string      `json:"affected_versions"`
+}
+
+type Severity string
+
+const (
+	SeverityLow      Severity = "LOW"
+	SeverityModerate Severity = "MODERATE"
+	SeverityHigh     Severity = "HIGH"
+)
+
+var AllSeverity = []Severity{
+	SeverityLow,
+	SeverityModerate,
+	SeverityHigh,
+}
+
+func (e Severity) IsValid() bool {
+	switch e {
+	case SeverityLow, SeverityModerate, SeverityHigh:
+		return true
+	}
+	return false
+}
+
+func (e Severity) String() string {
+	return string(e)
+}
+
+func (e *Severity) UnmarshalGQL(v interface{}) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = Severity(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid Severity", str)
+	}
+	return nil
+}
+
+func (e Severity) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
 }
