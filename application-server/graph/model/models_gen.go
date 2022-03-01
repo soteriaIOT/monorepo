@@ -41,6 +41,47 @@ type Vulnerability struct {
 	AffectedVersions       []string      `json:"affected_versions"`
 }
 
+type Ordering string
+
+const (
+	OrderingAscending  Ordering = "ASCENDING"
+	OrderingDescending Ordering = "DESCENDING"
+)
+
+var AllOrdering = []Ordering{
+	OrderingAscending,
+	OrderingDescending,
+}
+
+func (e Ordering) IsValid() bool {
+	switch e {
+	case OrderingAscending, OrderingDescending:
+		return true
+	}
+	return false
+}
+
+func (e Ordering) String() string {
+	return string(e)
+}
+
+func (e *Ordering) UnmarshalGQL(v interface{}) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = Ordering(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid Ordering", str)
+	}
+	return nil
+}
+
+func (e Ordering) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
 type Severity string
 
 const (

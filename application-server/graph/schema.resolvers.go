@@ -5,20 +5,33 @@ package graph
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/arora-aditya/monorepo/application-server/graph/generated"
 	"github.com/arora-aditya/monorepo/application-server/graph/model"
 )
 
-func (r *queryResolver) Vulnerabilities(ctx context.Context) ([]*model.Vulnerability, error) {
+func (r *queryResolver) Vulnerability(ctx context.Context, id string) (*model.Vulnerability, error) {
+	panic(fmt.Errorf("not implemented"))
+}
+
+func (r *queryResolver) Vulnerabilities(ctx context.Context, idPrefix *string, onlySeverities []model.Severity, ordering *model.Ordering) ([]*model.Vulnerability, error) {
 	return r.Resolver.Vulnerabilities, nil
 }
 
-func (r *queryResolver) Devices(ctx context.Context) ([]*model.Device, error) {
+func (r *queryResolver) Device(ctx context.Context, id string) (*model.Device, error) {
+	panic(fmt.Errorf("not implemented"))
+}
+
+func (r *queryResolver) Devices(ctx context.Context, namePrefix *string, ordering *model.Ordering) ([]*model.Device, error) {
 	return r.Resolver.Devices, nil
 }
 
-func (r *queryResolver) Images(ctx context.Context) ([]*model.Image, error) {
+func (r *queryResolver) Image(ctx context.Context, id string) (*model.Image, error) {
+	panic(fmt.Errorf("not implemented"))
+}
+
+func (r *queryResolver) Images(ctx context.Context, namePrefix *string, ordering *model.Ordering) ([]*model.Image, error) {
 	return r.Resolver.Images, nil
 }
 
