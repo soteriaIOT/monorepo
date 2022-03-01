@@ -68,9 +68,17 @@ type ComplexityRoot struct {
 	}
 
 	Vulnerability struct {
-		Dependency  func(childComplexity int) int
-		Description func(childComplexity int) int
-		ID          func(childComplexity int) int
+		AffectedVersions       func(childComplexity int) int
+		Dependencies           func(childComplexity int) int
+		ID                     func(childComplexity int) int
+		KeyIsPatched           func(childComplexity int) int
+		PatchAvailable         func(childComplexity int) int
+		PatchedVersions        func(childComplexity int) int
+		Permalink              func(childComplexity int) int
+		Severity               func(childComplexity int) int
+		Summary                func(childComplexity int) int
+		UnaffectedVersions     func(childComplexity int) int
+		VulnerableVersionRange func(childComplexity int) int
 	}
 }
 
@@ -186,19 +194,19 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Query.Vulnerabilities(childComplexity), true
 
-	case "Vulnerability.dependency":
-		if e.complexity.Vulnerability.Dependency == nil {
+	case "Vulnerability.affected_versions":
+		if e.complexity.Vulnerability.AffectedVersions == nil {
 			break
 		}
 
-		return e.complexity.Vulnerability.Dependency(childComplexity), true
+		return e.complexity.Vulnerability.AffectedVersions(childComplexity), true
 
-	case "Vulnerability.description":
-		if e.complexity.Vulnerability.Description == nil {
+	case "Vulnerability.dependencies":
+		if e.complexity.Vulnerability.Dependencies == nil {
 			break
 		}
 
-		return e.complexity.Vulnerability.Description(childComplexity), true
+		return e.complexity.Vulnerability.Dependencies(childComplexity), true
 
 	case "Vulnerability.id":
 		if e.complexity.Vulnerability.ID == nil {
@@ -206,6 +214,62 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Vulnerability.ID(childComplexity), true
+
+	case "Vulnerability.key_is_patched":
+		if e.complexity.Vulnerability.KeyIsPatched == nil {
+			break
+		}
+
+		return e.complexity.Vulnerability.KeyIsPatched(childComplexity), true
+
+	case "Vulnerability.patch_available":
+		if e.complexity.Vulnerability.PatchAvailable == nil {
+			break
+		}
+
+		return e.complexity.Vulnerability.PatchAvailable(childComplexity), true
+
+	case "Vulnerability.patched_versions":
+		if e.complexity.Vulnerability.PatchedVersions == nil {
+			break
+		}
+
+		return e.complexity.Vulnerability.PatchedVersions(childComplexity), true
+
+	case "Vulnerability.permalink":
+		if e.complexity.Vulnerability.Permalink == nil {
+			break
+		}
+
+		return e.complexity.Vulnerability.Permalink(childComplexity), true
+
+	case "Vulnerability.severity":
+		if e.complexity.Vulnerability.Severity == nil {
+			break
+		}
+
+		return e.complexity.Vulnerability.Severity(childComplexity), true
+
+	case "Vulnerability.summary":
+		if e.complexity.Vulnerability.Summary == nil {
+			break
+		}
+
+		return e.complexity.Vulnerability.Summary(childComplexity), true
+
+	case "Vulnerability.unaffected_versions":
+		if e.complexity.Vulnerability.UnaffectedVersions == nil {
+			break
+		}
+
+		return e.complexity.Vulnerability.UnaffectedVersions(childComplexity), true
+
+	case "Vulnerability.vulnerable_version_range":
+		if e.complexity.Vulnerability.VulnerableVersionRange == nil {
+			break
+		}
+
+		return e.complexity.Vulnerability.VulnerableVersionRange(childComplexity), true
 
 	}
 	return 0, false
@@ -257,10 +321,25 @@ func (ec *executionContext) introspectType(name string) (*introspection.Type, er
 }
 
 var sources = []*ast.Source{
-	{Name: "graph/schema.graphqls", Input: `type Vulnerability {
+	{Name: "graph/schema.graphqls", Input: `enum Severity {
+  LOW, MODERATE, HIGH
+}
+
+type Vulnerability {
+  # These fields are from https://github.com/arora-aditya/monorepo/blob/dependabot/vulnerability/query_github/frontend_data.json
+  permalink: String!
+  severity: Severity! # note that this will be one of "LOW, MODERATE,HIGH"
+  summary: String!
+  vulnerable_version_range: String!
+  patch_available: Boolean!
+  key_is_patched: Boolean!
   id: ID!
-  description: String!
-  dependency: Dependency!
+
+  # These fields are from https://github.com/arora-aditya/monorepo/blob/dependabot/vulnerability/query_github/dependabot_data.json
+  dependencies: [Dependency!]! # this is the dependency name
+  patched_versions: [String!]!
+  unaffected_versions: [String!]!
+  affected_versions: [String!]!
 }
 
 type Dependency {
@@ -874,6 +953,216 @@ func (ec *executionContext) _Query___schema(ctx context.Context, field graphql.C
 	return ec.marshalO__Schema2ᚖgithubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚋintrospectionᚐSchema(ctx, field.Selections, res)
 }
 
+func (ec *executionContext) _Vulnerability_permalink(ctx context.Context, field graphql.CollectedField, obj *model.Vulnerability) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Vulnerability",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Permalink, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Vulnerability_severity(ctx context.Context, field graphql.CollectedField, obj *model.Vulnerability) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Vulnerability",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Severity, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(model.Severity)
+	fc.Result = res
+	return ec.marshalNSeverity2githubᚗcomᚋaroraᚑadityaᚋmonorepoᚋapplicationᚑserverᚋgraphᚋmodelᚐSeverity(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Vulnerability_summary(ctx context.Context, field graphql.CollectedField, obj *model.Vulnerability) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Vulnerability",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Summary, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Vulnerability_vulnerable_version_range(ctx context.Context, field graphql.CollectedField, obj *model.Vulnerability) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Vulnerability",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.VulnerableVersionRange, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Vulnerability_patch_available(ctx context.Context, field graphql.CollectedField, obj *model.Vulnerability) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Vulnerability",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.PatchAvailable, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(bool)
+	fc.Result = res
+	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Vulnerability_key_is_patched(ctx context.Context, field graphql.CollectedField, obj *model.Vulnerability) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Vulnerability",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.KeyIsPatched, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(bool)
+	fc.Result = res
+	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
+}
+
 func (ec *executionContext) _Vulnerability_id(ctx context.Context, field graphql.CollectedField, obj *model.Vulnerability) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
@@ -909,7 +1198,7 @@ func (ec *executionContext) _Vulnerability_id(ctx context.Context, field graphql
 	return ec.marshalNID2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _Vulnerability_description(ctx context.Context, field graphql.CollectedField, obj *model.Vulnerability) (ret graphql.Marshaler) {
+func (ec *executionContext) _Vulnerability_dependencies(ctx context.Context, field graphql.CollectedField, obj *model.Vulnerability) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
 			ec.Error(ctx, ec.Recover(ctx, r))
@@ -927,7 +1216,7 @@ func (ec *executionContext) _Vulnerability_description(ctx context.Context, fiel
 	ctx = graphql.WithFieldContext(ctx, fc)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.Description, nil
+		return obj.Dependencies, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -939,12 +1228,12 @@ func (ec *executionContext) _Vulnerability_description(ctx context.Context, fiel
 		}
 		return graphql.Null
 	}
-	res := resTmp.(string)
+	res := resTmp.([]*model.Dependency)
 	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
+	return ec.marshalNDependency2ᚕᚖgithubᚗcomᚋaroraᚑadityaᚋmonorepoᚋapplicationᚑserverᚋgraphᚋmodelᚐDependencyᚄ(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _Vulnerability_dependency(ctx context.Context, field graphql.CollectedField, obj *model.Vulnerability) (ret graphql.Marshaler) {
+func (ec *executionContext) _Vulnerability_patched_versions(ctx context.Context, field graphql.CollectedField, obj *model.Vulnerability) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
 			ec.Error(ctx, ec.Recover(ctx, r))
@@ -962,7 +1251,7 @@ func (ec *executionContext) _Vulnerability_dependency(ctx context.Context, field
 	ctx = graphql.WithFieldContext(ctx, fc)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.Dependency, nil
+		return obj.PatchedVersions, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -974,9 +1263,79 @@ func (ec *executionContext) _Vulnerability_dependency(ctx context.Context, field
 		}
 		return graphql.Null
 	}
-	res := resTmp.(*model.Dependency)
+	res := resTmp.([]string)
 	fc.Result = res
-	return ec.marshalNDependency2ᚖgithubᚗcomᚋaroraᚑadityaᚋmonorepoᚋapplicationᚑserverᚋgraphᚋmodelᚐDependency(ctx, field.Selections, res)
+	return ec.marshalNString2ᚕstringᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Vulnerability_unaffected_versions(ctx context.Context, field graphql.CollectedField, obj *model.Vulnerability) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Vulnerability",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.UnaffectedVersions, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]string)
+	fc.Result = res
+	return ec.marshalNString2ᚕstringᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Vulnerability_affected_versions(ctx context.Context, field graphql.CollectedField, obj *model.Vulnerability) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Vulnerability",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.AffectedVersions, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]string)
+	fc.Result = res
+	return ec.marshalNString2ᚕstringᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) ___Directive_name(ctx context.Context, field graphql.CollectedField, obj *introspection.Directive) (ret graphql.Marshaler) {
@@ -2395,6 +2754,66 @@ func (ec *executionContext) _Vulnerability(ctx context.Context, sel ast.Selectio
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("Vulnerability")
+		case "permalink":
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Vulnerability_permalink(ctx, field, obj)
+			}
+
+			out.Values[i] = innerFunc(ctx)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "severity":
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Vulnerability_severity(ctx, field, obj)
+			}
+
+			out.Values[i] = innerFunc(ctx)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "summary":
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Vulnerability_summary(ctx, field, obj)
+			}
+
+			out.Values[i] = innerFunc(ctx)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "vulnerable_version_range":
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Vulnerability_vulnerable_version_range(ctx, field, obj)
+			}
+
+			out.Values[i] = innerFunc(ctx)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "patch_available":
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Vulnerability_patch_available(ctx, field, obj)
+			}
+
+			out.Values[i] = innerFunc(ctx)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "key_is_patched":
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Vulnerability_key_is_patched(ctx, field, obj)
+			}
+
+			out.Values[i] = innerFunc(ctx)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
 		case "id":
 			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Vulnerability_id(ctx, field, obj)
@@ -2405,9 +2824,9 @@ func (ec *executionContext) _Vulnerability(ctx context.Context, sel ast.Selectio
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
-		case "description":
+		case "dependencies":
 			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Vulnerability_description(ctx, field, obj)
+				return ec._Vulnerability_dependencies(ctx, field, obj)
 			}
 
 			out.Values[i] = innerFunc(ctx)
@@ -2415,9 +2834,29 @@ func (ec *executionContext) _Vulnerability(ctx context.Context, sel ast.Selectio
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
-		case "dependency":
+		case "patched_versions":
 			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Vulnerability_dependency(ctx, field, obj)
+				return ec._Vulnerability_patched_versions(ctx, field, obj)
+			}
+
+			out.Values[i] = innerFunc(ctx)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "unaffected_versions":
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Vulnerability_unaffected_versions(ctx, field, obj)
+			}
+
+			out.Values[i] = innerFunc(ctx)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "affected_versions":
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Vulnerability_affected_versions(ctx, field, obj)
 			}
 
 			out.Values[i] = innerFunc(ctx)
@@ -3037,6 +3476,16 @@ func (ec *executionContext) marshalNImage2ᚖgithubᚗcomᚋaroraᚑadityaᚋmon
 	return ec._Image(ctx, sel, v)
 }
 
+func (ec *executionContext) unmarshalNSeverity2githubᚗcomᚋaroraᚑadityaᚋmonorepoᚋapplicationᚑserverᚋgraphᚋmodelᚐSeverity(ctx context.Context, v interface{}) (model.Severity, error) {
+	var res model.Severity
+	err := res.UnmarshalGQL(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNSeverity2githubᚗcomᚋaroraᚑadityaᚋmonorepoᚋapplicationᚑserverᚋgraphᚋmodelᚐSeverity(ctx context.Context, sel ast.SelectionSet, v model.Severity) graphql.Marshaler {
+	return v
+}
+
 func (ec *executionContext) unmarshalNString2string(ctx context.Context, v interface{}) (string, error) {
 	res, err := graphql.UnmarshalString(v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -3050,6 +3499,38 @@ func (ec *executionContext) marshalNString2string(ctx context.Context, sel ast.S
 		}
 	}
 	return res
+}
+
+func (ec *executionContext) unmarshalNString2ᚕstringᚄ(ctx context.Context, v interface{}) ([]string, error) {
+	var vSlice []interface{}
+	if v != nil {
+		vSlice = graphql.CoerceList(v)
+	}
+	var err error
+	res := make([]string, len(vSlice))
+	for i := range vSlice {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithIndex(i))
+		res[i], err = ec.unmarshalNString2string(ctx, vSlice[i])
+		if err != nil {
+			return nil, err
+		}
+	}
+	return res, nil
+}
+
+func (ec *executionContext) marshalNString2ᚕstringᚄ(ctx context.Context, sel ast.SelectionSet, v []string) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	for i := range v {
+		ret[i] = ec.marshalNString2string(ctx, sel, v[i])
+	}
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
 }
 
 func (ec *executionContext) marshalNVulnerability2ᚕᚖgithubᚗcomᚋaroraᚑadityaᚋmonorepoᚋapplicationᚑserverᚋgraphᚋmodelᚐVulnerabilityᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.Vulnerability) graphql.Marshaler {

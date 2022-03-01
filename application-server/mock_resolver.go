@@ -9,16 +9,24 @@ func NewMockResolver() *graph.Resolver {
 	dependencies := []*model.Dependency{
 		{
 			ID:      "1",
-			Name:    "requests",
+			Name:    "b2sdk",
 			Version: "1.2.3",
 		},
 	}
 
 	vulnerabilities := []*model.Vulnerability{
 		{
-			ID:          "1",
-			Description: "foo",
-			Dependency:  dependencies[0],
+			Permalink:              "https://github.com/advisories/GHSA-p867-fxfr-ph2w",
+			Severity:               "MODERATE",
+			Summary:                "b2-sdk-python TOCTOU application key disclosure",
+			VulnerableVersionRange: "< 1.14.1",
+			PatchAvailable:         true,
+			KeyIsPatched:           false,
+			ID:                     "CVE-2022-23651",
+			Dependencies:           dependencies,
+			PatchedVersions:        []string{"1.14.1"},
+			UnaffectedVersions:     []string{},
+			AffectedVersions:       []string{"< 1.14.1"},
 		},
 	}
 
