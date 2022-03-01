@@ -50,19 +50,25 @@ def get_wifi():
     return {k: results[k] for k in RELEVANT_KEYS}
 
 def get_device_stats():
-    cpu = psutil.cpu_percent()
-    cpu_freq = psutil.cpu_freq().current
-    try:
-        cpu_temp = psutil.sensors_temperatures()["cpu_thermal"][0].current
-    except Exception as e:
-        cpu_temp = None
-    memory = psutil.virtual_memory().percent
-    return dict(
-        cpu=cpu,
-        cpu_freq=cpu_freq,
-        cpu_temp=cpu_temp,
-        memory=memory,
-    )
+    p = psutil.Process()
+    # provides speedup
+    with p.oneshot():
+        cpu_usage = psutil.cpu_percent()
+        cpu_freq = psutil.cpu_freq().current
+        try:
+            cpu_temp = psutil.sensors_temperatures()["cpu_thermal"][0].current
+        except Exception as e:
+            cpu_temp = None
+        memory = psutil.virtual_memory().percent
+        running_processes = len(psutil.pids())
+    
+        return dict(
+            cpu=cpu_usage,
+            cpu_freq=cpu_freq,
+            cpu_temp=cpu_temp,
+            memory=memory,
+            running_processes=running_processes,
+        )
 
 def send_metrics():
     weather_data = get_weather(WATERLOO)
@@ -74,9 +80,12 @@ def send_metrics():
         "feels_like": weather_data['main']['feels_like'] - 273.15,
         "humidity": weather_data['main']['humidity'],
         "wind_speed": weather_data['wind']['speed'],
-        "wind_gust": weather_data['wind']['gust'],
         "wind_deg": weather_data['wind']['deg'],
     }
+
+    if "gust" in weather_data['wind']:
+        weather_fields["wind_gust"] = weather_data['wind']['gust']
+
     weather_tags = {
         "location": weather_data['name']
     }
@@ -91,8 +100,10 @@ def send_metrics():
         "cpu": device_data['cpu'],
         "cpu_freq": device_data['cpu_freq'],
         "cpu_temp": device_data['cpu_temp'],
-        "memory_usage": device_data['memory']
+        "memory_usage": device_data['memory'],
+        "running_processes": device_data['running_processes']
     }
+    
     common_tags = {
         "device": "raspberry pi",
         "host": "raspi0001",
@@ -106,14 +117,16 @@ def send_metrics():
     influx_helper.add_metric(name="device", fields=device_fields, tags=common_tags)
     influx_helper.send()
 
-send_metrics()
-starttime = time.time()
-while True:
-    try:
-        send_metrics()
-        time.sleep(30.0 - ((time.time() - starttime) % 30.0))
-    except Exception as e:
-        print("Got Exception: " , e)
+
+if __name__ == "__main__":
+    starttime = time.time()
+    FREQUENCY = ONE_MINUTE
+    while True:
+        try:
+            send_metrics()
+            time.sleep(ONE_MINUTE - ((time.time() - starttime) % ONE_MINUTE))
+        except Exception as e:
+            print("Got Exception: " , e)
     
     
     
