@@ -84,7 +84,7 @@ def send_metrics():
     }
 
     if "gust" in weather_data['wind']:
-        weather_fields["wind_gust"] = weather_data['wind']['gust']
+        weather_fields["wind_gust"] = float(weather_data['wind']['gust'])
 
     weather_tags = {
         "location": weather_data['name']
@@ -103,7 +103,7 @@ def send_metrics():
         "memory_usage": device_data['memory'],
         "running_processes": device_data['running_processes']
     }
-    
+
     common_tags = {
         "device": "raspberry pi",
         "host": "raspi0001",
