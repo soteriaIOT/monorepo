@@ -163,12 +163,12 @@ def random_noise(delta=10):
 	return np.random.normal(0, delta)
 
 def get_devices_connected(devices_connected):
-	if np.random.randint(0, 50) == 5: 
+	if np.random.randint(0, 200) == 5: 
 		devices_connected = max(0, devices_connected + np.random.randint(-10, 10))
 	return devices_connected
 	
 def get_active_vulnerabilities(active_vulnerabilities):
-	if np.random.randint(0, 300) == 5: 
+	if np.random.randint(0, 200) == 5: 
 		active_vulnerabilities = max(0, active_vulnerabilities + np.random.randint(-2, 2))
 	return active_vulnerabilities
 
