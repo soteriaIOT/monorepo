@@ -49,24 +49,16 @@ type ComplexityRoot struct {
 	}
 
 	Device struct {
-		ID    func(childComplexity int) int
-		Image func(childComplexity int) int
-		Name  func(childComplexity int) int
-	}
-
-	Image struct {
-		Dependencies func(childComplexity int) int
-		ID           func(childComplexity int) int
-		Repository   func(childComplexity int) int
-		Tag          func(childComplexity int) int
+		ID   func(childComplexity int) int
+		Name func(childComplexity int) int
 	}
 
 	Query struct {
+		Dependencies    func(childComplexity int, limit *int, offset *int) int
+		Dependency      func(childComplexity int, id string) int
 		Device          func(childComplexity int, id string) int
-		Devices         func(childComplexity int, namePrefix *string, ordering *model.Ordering) int
-		Image           func(childComplexity int, id string) int
-		Images          func(childComplexity int, namePrefix *string, ordering *model.Ordering) int
-		Vulnerabilities func(childComplexity int, idPrefix *string, onlySeverities []model.Severity, ordering *model.Ordering) int
+		Devices         func(childComplexity int, limit *int, offset *int) int
+		Vulnerabilities func(childComplexity int, limit *int, offset *int) int
 		Vulnerability   func(childComplexity int, id string) int
 	}
 
@@ -87,11 +79,11 @@ type ComplexityRoot struct {
 
 type QueryResolver interface {
 	Vulnerability(ctx context.Context, id string) (*model.Vulnerability, error)
-	Vulnerabilities(ctx context.Context, idPrefix *string, onlySeverities []model.Severity, ordering *model.Ordering) ([]*model.Vulnerability, error)
+	Vulnerabilities(ctx context.Context, limit *int, offset *int) ([]*model.Vulnerability, error)
+	Dependency(ctx context.Context, id string) (*model.Dependency, error)
+	Dependencies(ctx context.Context, limit *int, offset *int) ([]*model.Dependency, error)
 	Device(ctx context.Context, id string) (*model.Device, error)
-	Devices(ctx context.Context, namePrefix *string, ordering *model.Ordering) ([]*model.Device, error)
-	Image(ctx context.Context, id string) (*model.Image, error)
-	Images(ctx context.Context, namePrefix *string, ordering *model.Ordering) ([]*model.Image, error)
+	Devices(ctx context.Context, limit *int, offset *int) ([]*model.Device, error)
 }
 
 type executableSchema struct {
@@ -137,13 +129,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Device.ID(childComplexity), true
 
-	case "Device.image":
-		if e.complexity.Device.Image == nil {
-			break
-		}
-
-		return e.complexity.Device.Image(childComplexity), true
-
 	case "Device.name":
 		if e.complexity.Device.Name == nil {
 			break
@@ -151,33 +136,29 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Device.Name(childComplexity), true
 
-	case "Image.dependencies":
-		if e.complexity.Image.Dependencies == nil {
+	case "Query.dependencies":
+		if e.complexity.Query.Dependencies == nil {
 			break
 		}
 
-		return e.complexity.Image.Dependencies(childComplexity), true
+		args, err := ec.field_Query_dependencies_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
 
-	case "Image.id":
-		if e.complexity.Image.ID == nil {
+		return e.complexity.Query.Dependencies(childComplexity, args["limit"].(*int), args["offset"].(*int)), true
+
+	case "Query.dependency":
+		if e.complexity.Query.Dependency == nil {
 			break
 		}
 
-		return e.complexity.Image.ID(childComplexity), true
-
-	case "Image.repository":
-		if e.complexity.Image.Repository == nil {
-			break
+		args, err := ec.field_Query_dependency_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
 		}
 
-		return e.complexity.Image.Repository(childComplexity), true
-
-	case "Image.tag":
-		if e.complexity.Image.Tag == nil {
-			break
-		}
-
-		return e.complexity.Image.Tag(childComplexity), true
+		return e.complexity.Query.Dependency(childComplexity, args["id"].(string)), true
 
 	case "Query.device":
 		if e.complexity.Query.Device == nil {
@@ -201,31 +182,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Query.Devices(childComplexity, args["namePrefix"].(*string), args["ordering"].(*model.Ordering)), true
-
-	case "Query.image":
-		if e.complexity.Query.Image == nil {
-			break
-		}
-
-		args, err := ec.field_Query_image_args(context.TODO(), rawArgs)
-		if err != nil {
-			return 0, false
-		}
-
-		return e.complexity.Query.Image(childComplexity, args["id"].(string)), true
-
-	case "Query.images":
-		if e.complexity.Query.Images == nil {
-			break
-		}
-
-		args, err := ec.field_Query_images_args(context.TODO(), rawArgs)
-		if err != nil {
-			return 0, false
-		}
-
-		return e.complexity.Query.Images(childComplexity, args["namePrefix"].(*string), args["ordering"].(*model.Ordering)), true
+		return e.complexity.Query.Devices(childComplexity, args["limit"].(*int), args["offset"].(*int)), true
 
 	case "Query.vulnerabilities":
 		if e.complexity.Query.Vulnerabilities == nil {
@@ -237,7 +194,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Query.Vulnerabilities(childComplexity, args["idPrefix"].(*string), args["onlySeverities"].([]model.Severity), args["ordering"].(*model.Ordering)), true
+		return e.complexity.Query.Vulnerabilities(childComplexity, args["limit"].(*int), args["offset"].(*int)), true
 
 	case "Query.vulnerability":
 		if e.complexity.Query.Vulnerability == nil {
@@ -382,10 +339,6 @@ var sources = []*ast.Source{
   LOW, MODERATE, HIGH
 }
 
-enum Ordering {
-  ASCENDING, DESCENDING
-}
-
 type Vulnerability {
   # These fields are from https://github.com/arora-aditya/monorepo/blob/dependabot/vulnerability/query_github/frontend_data.json
   permalink: String!
@@ -409,28 +362,20 @@ type Dependency {
   version: String!
 }
 
-type Image {
-  id: ID!
-  repository: String!
-  tag: String!
-  dependencies: [Dependency!]!
-}
-
 type Device {
   id: ID!
   name: String!
-  image: Image!
 }
 
 type Query {
   vulnerability(id: String!): Vulnerability
-  vulnerabilities(idPrefix: String, onlySeverities: [Severity!], ordering: Ordering = ASCENDING): [Vulnerability!]!
+  vulnerabilities(limit: Int = 20, offset: Int = 0): [Vulnerability!]!
+
+  dependency(id: String!): Dependency
+  dependencies(limit: Int = 20, offset: Int = 0): [Dependency!]!
 
   device(id: String!): Device
-  devices(namePrefix: String, ordering: Ordering = ASCENDING): [Device!]!
-
-  image(id: String!): Image
-  images(namePrefix: String, ordering: Ordering = ASCENDING): [Image!]!
+  devices(limit: Int = 20, offset: Int = 0): [Device!]!
 }
 `, BuiltIn: false},
 }
@@ -455,6 +400,45 @@ func (ec *executionContext) field_Query___type_args(ctx context.Context, rawArgs
 	return args, nil
 }
 
+func (ec *executionContext) field_Query_dependencies_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 *int
+	if tmp, ok := rawArgs["limit"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("limit"))
+		arg0, err = ec.unmarshalOInt2ᚖint(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["limit"] = arg0
+	var arg1 *int
+	if tmp, ok := rawArgs["offset"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("offset"))
+		arg1, err = ec.unmarshalOInt2ᚖint(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["offset"] = arg1
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_dependency_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 string
+	if tmp, ok := rawArgs["id"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("id"))
+		arg0, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["id"] = arg0
+	return args, nil
+}
+
 func (ec *executionContext) field_Query_device_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
@@ -473,96 +457,48 @@ func (ec *executionContext) field_Query_device_args(ctx context.Context, rawArgs
 func (ec *executionContext) field_Query_devices_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 *string
-	if tmp, ok := rawArgs["namePrefix"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("namePrefix"))
-		arg0, err = ec.unmarshalOString2ᚖstring(ctx, tmp)
+	var arg0 *int
+	if tmp, ok := rawArgs["limit"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("limit"))
+		arg0, err = ec.unmarshalOInt2ᚖint(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["namePrefix"] = arg0
-	var arg1 *model.Ordering
-	if tmp, ok := rawArgs["ordering"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("ordering"))
-		arg1, err = ec.unmarshalOOrdering2ᚖgithubᚗcomᚋaroraᚑadityaᚋmonorepoᚋapplicationᚑserverᚋgraphᚋmodelᚐOrdering(ctx, tmp)
+	args["limit"] = arg0
+	var arg1 *int
+	if tmp, ok := rawArgs["offset"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("offset"))
+		arg1, err = ec.unmarshalOInt2ᚖint(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["ordering"] = arg1
-	return args, nil
-}
-
-func (ec *executionContext) field_Query_image_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
-	var err error
-	args := map[string]interface{}{}
-	var arg0 string
-	if tmp, ok := rawArgs["id"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("id"))
-		arg0, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["id"] = arg0
-	return args, nil
-}
-
-func (ec *executionContext) field_Query_images_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
-	var err error
-	args := map[string]interface{}{}
-	var arg0 *string
-	if tmp, ok := rawArgs["namePrefix"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("namePrefix"))
-		arg0, err = ec.unmarshalOString2ᚖstring(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["namePrefix"] = arg0
-	var arg1 *model.Ordering
-	if tmp, ok := rawArgs["ordering"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("ordering"))
-		arg1, err = ec.unmarshalOOrdering2ᚖgithubᚗcomᚋaroraᚑadityaᚋmonorepoᚋapplicationᚑserverᚋgraphᚋmodelᚐOrdering(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["ordering"] = arg1
+	args["offset"] = arg1
 	return args, nil
 }
 
 func (ec *executionContext) field_Query_vulnerabilities_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 *string
-	if tmp, ok := rawArgs["idPrefix"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("idPrefix"))
-		arg0, err = ec.unmarshalOString2ᚖstring(ctx, tmp)
+	var arg0 *int
+	if tmp, ok := rawArgs["limit"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("limit"))
+		arg0, err = ec.unmarshalOInt2ᚖint(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["idPrefix"] = arg0
-	var arg1 []model.Severity
-	if tmp, ok := rawArgs["onlySeverities"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("onlySeverities"))
-		arg1, err = ec.unmarshalOSeverity2ᚕgithubᚗcomᚋaroraᚑadityaᚋmonorepoᚋapplicationᚑserverᚋgraphᚋmodelᚐSeverityᚄ(ctx, tmp)
+	args["limit"] = arg0
+	var arg1 *int
+	if tmp, ok := rawArgs["offset"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("offset"))
+		arg1, err = ec.unmarshalOInt2ᚖint(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["onlySeverities"] = arg1
-	var arg2 *model.Ordering
-	if tmp, ok := rawArgs["ordering"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("ordering"))
-		arg2, err = ec.unmarshalOOrdering2ᚖgithubᚗcomᚋaroraᚑadityaᚋmonorepoᚋapplicationᚑserverᚋgraphᚋmodelᚐOrdering(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["ordering"] = arg2
+	args["offset"] = arg1
 	return args, nil
 }
 
@@ -794,181 +730,6 @@ func (ec *executionContext) _Device_name(ctx context.Context, field graphql.Coll
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _Device_image(ctx context.Context, field graphql.CollectedField, obj *model.Device) (ret graphql.Marshaler) {
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	fc := &graphql.FieldContext{
-		Object:     "Device",
-		Field:      field,
-		Args:       nil,
-		IsMethod:   false,
-		IsResolver: false,
-	}
-
-	ctx = graphql.WithFieldContext(ctx, fc)
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Image, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(*model.Image)
-	fc.Result = res
-	return ec.marshalNImage2ᚖgithubᚗcomᚋaroraᚑadityaᚋmonorepoᚋapplicationᚑserverᚋgraphᚋmodelᚐImage(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) _Image_id(ctx context.Context, field graphql.CollectedField, obj *model.Image) (ret graphql.Marshaler) {
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	fc := &graphql.FieldContext{
-		Object:     "Image",
-		Field:      field,
-		Args:       nil,
-		IsMethod:   false,
-		IsResolver: false,
-	}
-
-	ctx = graphql.WithFieldContext(ctx, fc)
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.ID, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(string)
-	fc.Result = res
-	return ec.marshalNID2string(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) _Image_repository(ctx context.Context, field graphql.CollectedField, obj *model.Image) (ret graphql.Marshaler) {
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	fc := &graphql.FieldContext{
-		Object:     "Image",
-		Field:      field,
-		Args:       nil,
-		IsMethod:   false,
-		IsResolver: false,
-	}
-
-	ctx = graphql.WithFieldContext(ctx, fc)
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Repository, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(string)
-	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) _Image_tag(ctx context.Context, field graphql.CollectedField, obj *model.Image) (ret graphql.Marshaler) {
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	fc := &graphql.FieldContext{
-		Object:     "Image",
-		Field:      field,
-		Args:       nil,
-		IsMethod:   false,
-		IsResolver: false,
-	}
-
-	ctx = graphql.WithFieldContext(ctx, fc)
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Tag, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(string)
-	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) _Image_dependencies(ctx context.Context, field graphql.CollectedField, obj *model.Image) (ret graphql.Marshaler) {
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	fc := &graphql.FieldContext{
-		Object:     "Image",
-		Field:      field,
-		Args:       nil,
-		IsMethod:   false,
-		IsResolver: false,
-	}
-
-	ctx = graphql.WithFieldContext(ctx, fc)
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Dependencies, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.([]*model.Dependency)
-	fc.Result = res
-	return ec.marshalNDependency2ᚕᚖgithubᚗcomᚋaroraᚑadityaᚋmonorepoᚋapplicationᚑserverᚋgraphᚋmodelᚐDependencyᚄ(ctx, field.Selections, res)
-}
-
 func (ec *executionContext) _Query_vulnerability(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
@@ -1033,7 +794,7 @@ func (ec *executionContext) _Query_vulnerabilities(ctx context.Context, field gr
 	fc.Args = args
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().Vulnerabilities(rctx, args["idPrefix"].(*string), args["onlySeverities"].([]model.Severity), args["ordering"].(*model.Ordering))
+		return ec.resolvers.Query().Vulnerabilities(rctx, args["limit"].(*int), args["offset"].(*int))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -1048,6 +809,87 @@ func (ec *executionContext) _Query_vulnerabilities(ctx context.Context, field gr
 	res := resTmp.([]*model.Vulnerability)
 	fc.Result = res
 	return ec.marshalNVulnerability2ᚕᚖgithubᚗcomᚋaroraᚑadityaᚋmonorepoᚋapplicationᚑserverᚋgraphᚋmodelᚐVulnerabilityᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Query_dependency(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Query_dependency_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	fc.Args = args
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().Dependency(rctx, args["id"].(string))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*model.Dependency)
+	fc.Result = res
+	return ec.marshalODependency2ᚖgithubᚗcomᚋaroraᚑadityaᚋmonorepoᚋapplicationᚑserverᚋgraphᚋmodelᚐDependency(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Query_dependencies(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Query_dependencies_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	fc.Args = args
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().Dependencies(rctx, args["limit"].(*int), args["offset"].(*int))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]*model.Dependency)
+	fc.Result = res
+	return ec.marshalNDependency2ᚕᚖgithubᚗcomᚋaroraᚑadityaᚋmonorepoᚋapplicationᚑserverᚋgraphᚋmodelᚐDependencyᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Query_device(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -1114,7 +956,7 @@ func (ec *executionContext) _Query_devices(ctx context.Context, field graphql.Co
 	fc.Args = args
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().Devices(rctx, args["namePrefix"].(*string), args["ordering"].(*model.Ordering))
+		return ec.resolvers.Query().Devices(rctx, args["limit"].(*int), args["offset"].(*int))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -1129,87 +971,6 @@ func (ec *executionContext) _Query_devices(ctx context.Context, field graphql.Co
 	res := resTmp.([]*model.Device)
 	fc.Result = res
 	return ec.marshalNDevice2ᚕᚖgithubᚗcomᚋaroraᚑadityaᚋmonorepoᚋapplicationᚑserverᚋgraphᚋmodelᚐDeviceᚄ(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) _Query_image(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	fc := &graphql.FieldContext{
-		Object:     "Query",
-		Field:      field,
-		Args:       nil,
-		IsMethod:   true,
-		IsResolver: true,
-	}
-
-	ctx = graphql.WithFieldContext(ctx, fc)
-	rawArgs := field.ArgumentMap(ec.Variables)
-	args, err := ec.field_Query_image_args(ctx, rawArgs)
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	fc.Args = args
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().Image(rctx, args["id"].(string))
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*model.Image)
-	fc.Result = res
-	return ec.marshalOImage2ᚖgithubᚗcomᚋaroraᚑadityaᚋmonorepoᚋapplicationᚑserverᚋgraphᚋmodelᚐImage(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) _Query_images(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	fc := &graphql.FieldContext{
-		Object:     "Query",
-		Field:      field,
-		Args:       nil,
-		IsMethod:   true,
-		IsResolver: true,
-	}
-
-	ctx = graphql.WithFieldContext(ctx, fc)
-	rawArgs := field.ArgumentMap(ec.Variables)
-	args, err := ec.field_Query_images_args(ctx, rawArgs)
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	fc.Args = args
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().Images(rctx, args["namePrefix"].(*string), args["ordering"].(*model.Ordering))
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.([]*model.Image)
-	fc.Result = res
-	return ec.marshalNImage2ᚕᚖgithubᚗcomᚋaroraᚑadityaᚋmonorepoᚋapplicationᚑserverᚋgraphᚋmodelᚐImageᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Query___type(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -2879,77 +2640,6 @@ func (ec *executionContext) _Device(ctx context.Context, sel ast.SelectionSet, o
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
-		case "image":
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Device_image(ctx, field, obj)
-			}
-
-			out.Values[i] = innerFunc(ctx)
-
-			if out.Values[i] == graphql.Null {
-				invalids++
-			}
-		default:
-			panic("unknown field " + strconv.Quote(field.Name))
-		}
-	}
-	out.Dispatch()
-	if invalids > 0 {
-		return graphql.Null
-	}
-	return out
-}
-
-var imageImplementors = []string{"Image"}
-
-func (ec *executionContext) _Image(ctx context.Context, sel ast.SelectionSet, obj *model.Image) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, imageImplementors)
-	out := graphql.NewFieldSet(fields)
-	var invalids uint32
-	for i, field := range fields {
-		switch field.Name {
-		case "__typename":
-			out.Values[i] = graphql.MarshalString("Image")
-		case "id":
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Image_id(ctx, field, obj)
-			}
-
-			out.Values[i] = innerFunc(ctx)
-
-			if out.Values[i] == graphql.Null {
-				invalids++
-			}
-		case "repository":
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Image_repository(ctx, field, obj)
-			}
-
-			out.Values[i] = innerFunc(ctx)
-
-			if out.Values[i] == graphql.Null {
-				invalids++
-			}
-		case "tag":
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Image_tag(ctx, field, obj)
-			}
-
-			out.Values[i] = innerFunc(ctx)
-
-			if out.Values[i] == graphql.Null {
-				invalids++
-			}
-		case "dependencies":
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Image_dependencies(ctx, field, obj)
-			}
-
-			out.Values[i] = innerFunc(ctx)
-
-			if out.Values[i] == graphql.Null {
-				invalids++
-			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -3023,6 +2713,49 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 			out.Concurrently(i, func() graphql.Marshaler {
 				return rrm(innerCtx)
 			})
+		case "dependency":
+			field := field
+
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_dependency(ctx, field)
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx, innerFunc)
+			}
+
+			out.Concurrently(i, func() graphql.Marshaler {
+				return rrm(innerCtx)
+			})
+		case "dependencies":
+			field := field
+
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_dependencies(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx, innerFunc)
+			}
+
+			out.Concurrently(i, func() graphql.Marshaler {
+				return rrm(innerCtx)
+			})
 		case "device":
 			field := field
 
@@ -3053,49 +2786,6 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 					}
 				}()
 				res = ec._Query_devices(ctx, field)
-				if res == graphql.Null {
-					atomic.AddUint32(&invalids, 1)
-				}
-				return res
-			}
-
-			rrm := func(ctx context.Context) graphql.Marshaler {
-				return ec.OperationContext.RootResolverMiddleware(ctx, innerFunc)
-			}
-
-			out.Concurrently(i, func() graphql.Marshaler {
-				return rrm(innerCtx)
-			})
-		case "image":
-			field := field
-
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._Query_image(ctx, field)
-				return res
-			}
-
-			rrm := func(ctx context.Context) graphql.Marshaler {
-				return ec.OperationContext.RootResolverMiddleware(ctx, innerFunc)
-			}
-
-			out.Concurrently(i, func() graphql.Marshaler {
-				return rrm(innerCtx)
-			})
-		case "images":
-			field := field
-
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._Query_images(ctx, field)
 				if res == graphql.Null {
 					atomic.AddUint32(&invalids, 1)
 				}
@@ -3812,60 +3502,6 @@ func (ec *executionContext) marshalNID2string(ctx context.Context, sel ast.Selec
 	return res
 }
 
-func (ec *executionContext) marshalNImage2ᚕᚖgithubᚗcomᚋaroraᚑadityaᚋmonorepoᚋapplicationᚑserverᚋgraphᚋmodelᚐImageᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.Image) graphql.Marshaler {
-	ret := make(graphql.Array, len(v))
-	var wg sync.WaitGroup
-	isLen1 := len(v) == 1
-	if !isLen1 {
-		wg.Add(len(v))
-	}
-	for i := range v {
-		i := i
-		fc := &graphql.FieldContext{
-			Index:  &i,
-			Result: &v[i],
-		}
-		ctx := graphql.WithFieldContext(ctx, fc)
-		f := func(i int) {
-			defer func() {
-				if r := recover(); r != nil {
-					ec.Error(ctx, ec.Recover(ctx, r))
-					ret = nil
-				}
-			}()
-			if !isLen1 {
-				defer wg.Done()
-			}
-			ret[i] = ec.marshalNImage2ᚖgithubᚗcomᚋaroraᚑadityaᚋmonorepoᚋapplicationᚑserverᚋgraphᚋmodelᚐImage(ctx, sel, v[i])
-		}
-		if isLen1 {
-			f(i)
-		} else {
-			go f(i)
-		}
-
-	}
-	wg.Wait()
-
-	for _, e := range ret {
-		if e == graphql.Null {
-			return graphql.Null
-		}
-	}
-
-	return ret
-}
-
-func (ec *executionContext) marshalNImage2ᚖgithubᚗcomᚋaroraᚑadityaᚋmonorepoᚋapplicationᚑserverᚋgraphᚋmodelᚐImage(ctx context.Context, sel ast.SelectionSet, v *model.Image) graphql.Marshaler {
-	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	return ec._Image(ctx, sel, v)
-}
-
 func (ec *executionContext) unmarshalNSeverity2githubᚗcomᚋaroraᚑadityaᚋmonorepoᚋapplicationᚑserverᚋgraphᚋmodelᚐSeverity(ctx context.Context, v interface{}) (model.Severity, error) {
 	var res model.Severity
 	err := res.UnmarshalGQL(v)
@@ -4256,6 +3892,13 @@ func (ec *executionContext) marshalOBoolean2ᚖbool(ctx context.Context, sel ast
 	return res
 }
 
+func (ec *executionContext) marshalODependency2ᚖgithubᚗcomᚋaroraᚑadityaᚋmonorepoᚋapplicationᚑserverᚋgraphᚋmodelᚐDependency(ctx context.Context, sel ast.SelectionSet, v *model.Dependency) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._Dependency(ctx, sel, v)
+}
+
 func (ec *executionContext) marshalODevice2ᚖgithubᚗcomᚋaroraᚑadityaᚋmonorepoᚋapplicationᚑserverᚋgraphᚋmodelᚐDevice(ctx context.Context, sel ast.SelectionSet, v *model.Device) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
@@ -4263,94 +3906,20 @@ func (ec *executionContext) marshalODevice2ᚖgithubᚗcomᚋaroraᚑadityaᚋmo
 	return ec._Device(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalOImage2ᚖgithubᚗcomᚋaroraᚑadityaᚋmonorepoᚋapplicationᚑserverᚋgraphᚋmodelᚐImage(ctx context.Context, sel ast.SelectionSet, v *model.Image) graphql.Marshaler {
-	if v == nil {
-		return graphql.Null
-	}
-	return ec._Image(ctx, sel, v)
-}
-
-func (ec *executionContext) unmarshalOOrdering2ᚖgithubᚗcomᚋaroraᚑadityaᚋmonorepoᚋapplicationᚑserverᚋgraphᚋmodelᚐOrdering(ctx context.Context, v interface{}) (*model.Ordering, error) {
+func (ec *executionContext) unmarshalOInt2ᚖint(ctx context.Context, v interface{}) (*int, error) {
 	if v == nil {
 		return nil, nil
 	}
-	var res = new(model.Ordering)
-	err := res.UnmarshalGQL(v)
-	return res, graphql.ErrorOnPath(ctx, err)
+	res, err := graphql.UnmarshalInt(v)
+	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalOOrdering2ᚖgithubᚗcomᚋaroraᚑadityaᚋmonorepoᚋapplicationᚑserverᚋgraphᚋmodelᚐOrdering(ctx context.Context, sel ast.SelectionSet, v *model.Ordering) graphql.Marshaler {
+func (ec *executionContext) marshalOInt2ᚖint(ctx context.Context, sel ast.SelectionSet, v *int) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
-	return v
-}
-
-func (ec *executionContext) unmarshalOSeverity2ᚕgithubᚗcomᚋaroraᚑadityaᚋmonorepoᚋapplicationᚑserverᚋgraphᚋmodelᚐSeverityᚄ(ctx context.Context, v interface{}) ([]model.Severity, error) {
-	if v == nil {
-		return nil, nil
-	}
-	var vSlice []interface{}
-	if v != nil {
-		vSlice = graphql.CoerceList(v)
-	}
-	var err error
-	res := make([]model.Severity, len(vSlice))
-	for i := range vSlice {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithIndex(i))
-		res[i], err = ec.unmarshalNSeverity2githubᚗcomᚋaroraᚑadityaᚋmonorepoᚋapplicationᚑserverᚋgraphᚋmodelᚐSeverity(ctx, vSlice[i])
-		if err != nil {
-			return nil, err
-		}
-	}
-	return res, nil
-}
-
-func (ec *executionContext) marshalOSeverity2ᚕgithubᚗcomᚋaroraᚑadityaᚋmonorepoᚋapplicationᚑserverᚋgraphᚋmodelᚐSeverityᚄ(ctx context.Context, sel ast.SelectionSet, v []model.Severity) graphql.Marshaler {
-	if v == nil {
-		return graphql.Null
-	}
-	ret := make(graphql.Array, len(v))
-	var wg sync.WaitGroup
-	isLen1 := len(v) == 1
-	if !isLen1 {
-		wg.Add(len(v))
-	}
-	for i := range v {
-		i := i
-		fc := &graphql.FieldContext{
-			Index:  &i,
-			Result: &v[i],
-		}
-		ctx := graphql.WithFieldContext(ctx, fc)
-		f := func(i int) {
-			defer func() {
-				if r := recover(); r != nil {
-					ec.Error(ctx, ec.Recover(ctx, r))
-					ret = nil
-				}
-			}()
-			if !isLen1 {
-				defer wg.Done()
-			}
-			ret[i] = ec.marshalNSeverity2githubᚗcomᚋaroraᚑadityaᚋmonorepoᚋapplicationᚑserverᚋgraphᚋmodelᚐSeverity(ctx, sel, v[i])
-		}
-		if isLen1 {
-			f(i)
-		} else {
-			go f(i)
-		}
-
-	}
-	wg.Wait()
-
-	for _, e := range ret {
-		if e == graphql.Null {
-			return graphql.Null
-		}
-	}
-
-	return ret
+	res := graphql.MarshalInt(*v)
+	return res
 }
 
 func (ec *executionContext) unmarshalOString2string(ctx context.Context, v interface{}) (string, error) {

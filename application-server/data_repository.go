@@ -5,14 +5,11 @@ import "github.com/arora-aditya/monorepo/application-server/graph/model"
 // DataRepository defines the query patterns for accessing application data
 type DataRepository interface {
 	GetVulnerability(id string) (*model.Vulnerability, error)
-	FindVulnerabilities(idPrefix string, onlySeverities []model.Severity, ordering model.Ordering) []*model.Vulnerability
+	GetVulnerabilities(limit int, offset int) []*model.Vulnerability
 
 	GetDependency(id string) (*model.Dependency, error)
-	FindDependencies(namePrefix string, ordering model.Ordering) []*model.Dependency
-
-	GetImage(id string) (*model.Image, error)
-	FindImages(repository string, ordering model.Ordering) []*model.Image
+	GetDependencies(limit int, offset int) []*model.Dependency
 
 	GetDevice(id string) (*model.Device, error)
-	FindDevices(namePrefix string, ordering model.Ordering) []*model.Device
+	GetDevices(limit int, offset int) []*model.Device
 }

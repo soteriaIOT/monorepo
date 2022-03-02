@@ -11,6 +11,5 @@ import "github.com/arora-aditya/monorepo/application-server/graph/model"
 type Resolver struct {
 	Vulnerabilities []*model.Vulnerability
 	Dependencies    []*model.Dependency
-	Images          []*model.Image
 	Devices         []*model.Device
 }

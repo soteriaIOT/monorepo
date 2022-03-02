@@ -15,24 +15,24 @@ func (r *queryResolver) Vulnerability(ctx context.Context, id string) (*model.Vu
 	panic(fmt.Errorf("not implemented"))
 }
 
-func (r *queryResolver) Vulnerabilities(ctx context.Context, idPrefix *string, onlySeverities []model.Severity, ordering *model.Ordering) ([]*model.Vulnerability, error) {
+func (r *queryResolver) Vulnerabilities(ctx context.Context, limit *int, offset *int) ([]*model.Vulnerability, error) {
 	return r.Resolver.Vulnerabilities, nil
+}
+
+func (r *queryResolver) Dependency(ctx context.Context, id string) (*model.Dependency, error) {
+	panic(fmt.Errorf("not implemented"))
+}
+
+func (r *queryResolver) Dependencies(ctx context.Context, limit *int, offset *int) ([]*model.Dependency, error) {
+	panic(fmt.Errorf("not implemented"))
 }
 
 func (r *queryResolver) Device(ctx context.Context, id string) (*model.Device, error) {
 	panic(fmt.Errorf("not implemented"))
 }
 
-func (r *queryResolver) Devices(ctx context.Context, namePrefix *string, ordering *model.Ordering) ([]*model.Device, error) {
-	return r.Resolver.Devices, nil
-}
-
-func (r *queryResolver) Image(ctx context.Context, id string) (*model.Image, error) {
+func (r *queryResolver) Devices(ctx context.Context, limit *int, offset *int) ([]*model.Device, error) {
 	panic(fmt.Errorf("not implemented"))
-}
-
-func (r *queryResolver) Images(ctx context.Context, namePrefix *string, ordering *model.Ordering) ([]*model.Image, error) {
-	return r.Resolver.Images, nil
 }
 
 // Query returns generated.QueryResolver implementation.

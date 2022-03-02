@@ -15,16 +15,8 @@ type Dependency struct {
 }
 
 type Device struct {
-	ID    string `json:"id"`
-	Name  string `json:"name"`
-	Image *Image `json:"image"`
-}
-
-type Image struct {
-	ID           string        `json:"id"`
-	Repository   string        `json:"repository"`
-	Tag          string        `json:"tag"`
-	Dependencies []*Dependency `json:"dependencies"`
+	ID   string `json:"id"`
+	Name string `json:"name"`
 }
 
 type Vulnerability struct {
@@ -39,47 +31,6 @@ type Vulnerability struct {
 	PatchedVersions        []string      `json:"patched_versions"`
 	UnaffectedVersions     []string      `json:"unaffected_versions"`
 	AffectedVersions       []string      `json:"affected_versions"`
-}
-
-type Ordering string
-
-const (
-	OrderingAscending  Ordering = "ASCENDING"
-	OrderingDescending Ordering = "DESCENDING"
-)
-
-var AllOrdering = []Ordering{
-	OrderingAscending,
-	OrderingDescending,
-}
-
-func (e Ordering) IsValid() bool {
-	switch e {
-	case OrderingAscending, OrderingDescending:
-		return true
-	}
-	return false
-}
-
-func (e Ordering) String() string {
-	return string(e)
-}
-
-func (e *Ordering) UnmarshalGQL(v interface{}) error {
-	str, ok := v.(string)
-	if !ok {
-		return fmt.Errorf("enums must be strings")
-	}
-
-	*e = Ordering(str)
-	if !e.IsValid() {
-		return fmt.Errorf("%s is not a valid Ordering", str)
-	}
-	return nil
-}
-
-func (e Ordering) MarshalGQL(w io.Writer) {
-	fmt.Fprint(w, strconv.Quote(e.String()))
 }
 
 type Severity string

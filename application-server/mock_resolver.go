@@ -30,27 +30,16 @@ func NewMockResolver() *graph.Resolver {
 		},
 	}
 
-	images := []*model.Image{
-		{
-			ID:           "1",
-			Repository:   "bar",
-			Tag:          "latest",
-			Dependencies: dependencies,
-		},
-	}
-
 	devices := []*model.Device{
 		{
-			ID:    "1",
-			Name:  "acme-security-camera",
-			Image: images[0],
+			ID:   "1",
+			Name: "acme-security-camera",
 		},
 	}
 
 	return &graph.Resolver{
 		Dependencies:    dependencies,
 		Vulnerabilities: vulnerabilities,
-		Images:          images,
 		Devices:         devices,
 	}
 }

@@ -2,10 +2,6 @@ enum Severity {
   LOW, MODERATE, HIGH
 }
 
-enum Ordering {
-  ASCENDING, DESCENDING
-}
-
 type Vulnerability {
   # These fields are from https://github.com/arora-aditya/monorepo/blob/dependabot/vulnerability/query_github/frontend_data.json
   permalink: String!
@@ -29,26 +25,18 @@ type Dependency {
   version: String!
 }
 
-type Image {
-  id: ID!
-  repository: String!
-  tag: String!
-  dependencies: [Dependency!]!
-}
-
 type Device {
   id: ID!
   name: String!
-  image: Image!
 }
 
 type Query {
   vulnerability(id: String!): Vulnerability
-  vulnerabilities(idPrefix: String, onlySeverities: [Severity!], ordering: Ordering = ASCENDING): [Vulnerability!]!
+  vulnerabilities(limit: Int = 20, offset: Int = 0): [Vulnerability!]!
+
+  dependency(id: String!): Dependency
+  dependencies(limit: Int = 20, offset: Int = 0): [Dependency!]!
 
   device(id: String!): Device
-  devices(namePrefix: String, ordering: Ordering = ASCENDING): [Device!]!
-
-  image(id: String!): Image
-  images(namePrefix: String, ordering: Ordering = ASCENDING): [Image!]!
+  devices(limit: Int = 20, offset: Int = 0): [Device!]!
 }
