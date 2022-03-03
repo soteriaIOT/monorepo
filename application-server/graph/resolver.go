@@ -2,15 +2,12 @@ package graph
 
 //go:generate go run github.com/99designs/gqlgen generate
 
-import "github.com/arora-aditya/monorepo/application-server/graph/model"
+import "github.com/arora-aditya/monorepo/application-server/data"
 
 // This file will not be regenerated automatically.
 //
 // It serves as dependency injection for your app, add any dependencies you require here.
 
 type Resolver struct {
-	Vulnerabilities []*model.Vulnerability
-	Dependencies    []*model.Dependency
-	Images          []*model.Image
-	Devices         []*model.Device
+	Repository data.Repository
 }

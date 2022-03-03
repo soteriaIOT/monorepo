@@ -15,16 +15,8 @@ type Dependency struct {
 }
 
 type Device struct {
-	ID    string `json:"id"`
-	Name  string `json:"name"`
-	Image *Image `json:"image"`
-}
-
-type Image struct {
-	ID           string        `json:"id"`
-	Repository   string        `json:"repository"`
-	Tag          string        `json:"tag"`
-	Dependencies []*Dependency `json:"dependencies"`
+	ID   string `json:"id"`
+	Name string `json:"name"`
 }
 
 type Vulnerability struct {

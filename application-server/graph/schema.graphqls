@@ -25,21 +25,18 @@ type Dependency {
   version: String!
 }
 
-type Image {
-  id: ID!
-  repository: String!
-  tag: String!
-  dependencies: [Dependency!]!
-}
-
 type Device {
   id: ID!
   name: String!
-  image: Image!
 }
 
 type Query {
-  vulnerabilities: [Vulnerability!]!
-  devices: [Device!]!
-  images: [Image!]!
+  vulnerability(id: String!): Vulnerability
+  vulnerabilities(limit: Int! = 20, offset: Int! = 0): [Vulnerability!]!
+
+  dependency(id: String!): Dependency
+  dependencies(limit: Int! = 20, offset: Int! = 0): [Dependency!]!
+
+  device(id: String!): Device
+  devices(limit: Int! = 20, offset: Int! = 0): [Device!]!
 }

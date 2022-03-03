@@ -10,16 +10,28 @@ import (
 	"github.com/arora-aditya/monorepo/application-server/graph/model"
 )
 
-func (r *queryResolver) Vulnerabilities(ctx context.Context) ([]*model.Vulnerability, error) {
-	return r.Resolver.Vulnerabilities, nil
+func (r *queryResolver) Vulnerability(ctx context.Context, id string) (*model.Vulnerability, error) {
+	return r.Repository.GetVulnerability(id)
 }
 
-func (r *queryResolver) Devices(ctx context.Context) ([]*model.Device, error) {
-	return r.Resolver.Devices, nil
+func (r *queryResolver) Vulnerabilities(ctx context.Context, limit int, offset int) ([]*model.Vulnerability, error) {
+	return r.Repository.GetVulnerabilities(limit, offset)
 }
 
-func (r *queryResolver) Images(ctx context.Context) ([]*model.Image, error) {
-	return r.Resolver.Images, nil
+func (r *queryResolver) Dependency(ctx context.Context, id string) (*model.Dependency, error) {
+	return r.Repository.GetDependency(id)
+}
+
+func (r *queryResolver) Dependencies(ctx context.Context, limit int, offset int) ([]*model.Dependency, error) {
+	return r.Repository.GetDependencies(limit, offset)
+}
+
+func (r *queryResolver) Device(ctx context.Context, id string) (*model.Device, error) {
+	return r.Repository.GetDevice(id)
+}
+
+func (r *queryResolver) Devices(ctx context.Context, limit int, offset int) ([]*model.Device, error) {
+	return r.Repository.GetDevices(limit, offset)
 }
 
 // Query returns generated.QueryResolver implementation.

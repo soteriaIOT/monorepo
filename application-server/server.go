@@ -7,6 +7,8 @@ import (
 
 	"github.com/99designs/gqlgen/graphql/handler"
 	"github.com/99designs/gqlgen/graphql/playground"
+	"github.com/arora-aditya/monorepo/application-server/data"
+	"github.com/arora-aditya/monorepo/application-server/graph"
 	"github.com/arora-aditya/monorepo/application-server/graph/generated"
 	"github.com/go-chi/chi/v5"
 	"github.com/rs/cors"
@@ -28,7 +30,11 @@ func main() {
 		port = defaultPort
 	}
 
-	srv := handler.NewDefaultServer(generated.NewExecutableSchema(generated.Config{Resolvers: NewMockResolver()}))
+	r := &graph.Resolver{
+		Repository: data.NewDemoRepository(),
+	}
+
+	srv := handler.NewDefaultServer(generated.NewExecutableSchema(generated.Config{Resolvers: r}))
 
 	router.Handle("/", playground.Handler("GraphQL playground", "/query"))
 	router.Handle("/query", srv)
