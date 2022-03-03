@@ -5,34 +5,33 @@ package graph
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/arora-aditya/monorepo/application-server/graph/generated"
 	"github.com/arora-aditya/monorepo/application-server/graph/model"
 )
 
 func (r *queryResolver) Vulnerability(ctx context.Context, id string) (*model.Vulnerability, error) {
-	panic(fmt.Errorf("not implemented"))
+	return r.Repository.GetVulnerability(id)
 }
 
-func (r *queryResolver) Vulnerabilities(ctx context.Context, limit *int, offset *int) ([]*model.Vulnerability, error) {
-	return r.Resolver.Vulnerabilities, nil
+func (r *queryResolver) Vulnerabilities(ctx context.Context, limit int, offset int) ([]*model.Vulnerability, error) {
+	return r.Repository.GetVulnerabilities(limit, offset)
 }
 
 func (r *queryResolver) Dependency(ctx context.Context, id string) (*model.Dependency, error) {
-	panic(fmt.Errorf("not implemented"))
+	return r.Repository.GetDependency(id)
 }
 
-func (r *queryResolver) Dependencies(ctx context.Context, limit *int, offset *int) ([]*model.Dependency, error) {
-	panic(fmt.Errorf("not implemented"))
+func (r *queryResolver) Dependencies(ctx context.Context, limit int, offset int) ([]*model.Dependency, error) {
+	return r.Repository.GetDependencies(limit, offset)
 }
 
 func (r *queryResolver) Device(ctx context.Context, id string) (*model.Device, error) {
-	panic(fmt.Errorf("not implemented"))
+	return r.Repository.GetDevice(id)
 }
 
-func (r *queryResolver) Devices(ctx context.Context, limit *int, offset *int) ([]*model.Device, error) {
-	panic(fmt.Errorf("not implemented"))
+func (r *queryResolver) Devices(ctx context.Context, limit int, offset int) ([]*model.Device, error) {
+	return r.Repository.GetDevices(limit, offset)
 }
 
 // Query returns generated.QueryResolver implementation.

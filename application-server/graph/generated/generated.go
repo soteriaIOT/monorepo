@@ -54,11 +54,11 @@ type ComplexityRoot struct {
 	}
 
 	Query struct {
-		Dependencies    func(childComplexity int, limit *int, offset *int) int
+		Dependencies    func(childComplexity int, limit int, offset int) int
 		Dependency      func(childComplexity int, id string) int
 		Device          func(childComplexity int, id string) int
-		Devices         func(childComplexity int, limit *int, offset *int) int
-		Vulnerabilities func(childComplexity int, limit *int, offset *int) int
+		Devices         func(childComplexity int, limit int, offset int) int
+		Vulnerabilities func(childComplexity int, limit int, offset int) int
 		Vulnerability   func(childComplexity int, id string) int
 	}
 
@@ -79,11 +79,11 @@ type ComplexityRoot struct {
 
 type QueryResolver interface {
 	Vulnerability(ctx context.Context, id string) (*model.Vulnerability, error)
-	Vulnerabilities(ctx context.Context, limit *int, offset *int) ([]*model.Vulnerability, error)
+	Vulnerabilities(ctx context.Context, limit int, offset int) ([]*model.Vulnerability, error)
 	Dependency(ctx context.Context, id string) (*model.Dependency, error)
-	Dependencies(ctx context.Context, limit *int, offset *int) ([]*model.Dependency, error)
+	Dependencies(ctx context.Context, limit int, offset int) ([]*model.Dependency, error)
 	Device(ctx context.Context, id string) (*model.Device, error)
-	Devices(ctx context.Context, limit *int, offset *int) ([]*model.Device, error)
+	Devices(ctx context.Context, limit int, offset int) ([]*model.Device, error)
 }
 
 type executableSchema struct {
@@ -146,7 +146,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Query.Dependencies(childComplexity, args["limit"].(*int), args["offset"].(*int)), true
+		return e.complexity.Query.Dependencies(childComplexity, args["limit"].(int), args["offset"].(int)), true
 
 	case "Query.dependency":
 		if e.complexity.Query.Dependency == nil {
@@ -182,7 +182,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Query.Devices(childComplexity, args["limit"].(*int), args["offset"].(*int)), true
+		return e.complexity.Query.Devices(childComplexity, args["limit"].(int), args["offset"].(int)), true
 
 	case "Query.vulnerabilities":
 		if e.complexity.Query.Vulnerabilities == nil {
@@ -194,7 +194,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Query.Vulnerabilities(childComplexity, args["limit"].(*int), args["offset"].(*int)), true
+		return e.complexity.Query.Vulnerabilities(childComplexity, args["limit"].(int), args["offset"].(int)), true
 
 	case "Query.vulnerability":
 		if e.complexity.Query.Vulnerability == nil {
@@ -369,13 +369,13 @@ type Device {
 
 type Query {
   vulnerability(id: String!): Vulnerability
-  vulnerabilities(limit: Int = 20, offset: Int = 0): [Vulnerability!]!
+  vulnerabilities(limit: Int! = 20, offset: Int! = 0): [Vulnerability!]!
 
   dependency(id: String!): Dependency
-  dependencies(limit: Int = 20, offset: Int = 0): [Dependency!]!
+  dependencies(limit: Int! = 20, offset: Int! = 0): [Dependency!]!
 
   device(id: String!): Device
-  devices(limit: Int = 20, offset: Int = 0): [Device!]!
+  devices(limit: Int! = 20, offset: Int! = 0): [Device!]!
 }
 `, BuiltIn: false},
 }
@@ -403,19 +403,19 @@ func (ec *executionContext) field_Query___type_args(ctx context.Context, rawArgs
 func (ec *executionContext) field_Query_dependencies_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 *int
+	var arg0 int
 	if tmp, ok := rawArgs["limit"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("limit"))
-		arg0, err = ec.unmarshalOInt2ᚖint(ctx, tmp)
+		arg0, err = ec.unmarshalNInt2int(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
 	args["limit"] = arg0
-	var arg1 *int
+	var arg1 int
 	if tmp, ok := rawArgs["offset"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("offset"))
-		arg1, err = ec.unmarshalOInt2ᚖint(ctx, tmp)
+		arg1, err = ec.unmarshalNInt2int(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -457,19 +457,19 @@ func (ec *executionContext) field_Query_device_args(ctx context.Context, rawArgs
 func (ec *executionContext) field_Query_devices_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 *int
+	var arg0 int
 	if tmp, ok := rawArgs["limit"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("limit"))
-		arg0, err = ec.unmarshalOInt2ᚖint(ctx, tmp)
+		arg0, err = ec.unmarshalNInt2int(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
 	args["limit"] = arg0
-	var arg1 *int
+	var arg1 int
 	if tmp, ok := rawArgs["offset"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("offset"))
-		arg1, err = ec.unmarshalOInt2ᚖint(ctx, tmp)
+		arg1, err = ec.unmarshalNInt2int(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -481,19 +481,19 @@ func (ec *executionContext) field_Query_devices_args(ctx context.Context, rawArg
 func (ec *executionContext) field_Query_vulnerabilities_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 *int
+	var arg0 int
 	if tmp, ok := rawArgs["limit"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("limit"))
-		arg0, err = ec.unmarshalOInt2ᚖint(ctx, tmp)
+		arg0, err = ec.unmarshalNInt2int(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
 	args["limit"] = arg0
-	var arg1 *int
+	var arg1 int
 	if tmp, ok := rawArgs["offset"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("offset"))
-		arg1, err = ec.unmarshalOInt2ᚖint(ctx, tmp)
+		arg1, err = ec.unmarshalNInt2int(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -794,7 +794,7 @@ func (ec *executionContext) _Query_vulnerabilities(ctx context.Context, field gr
 	fc.Args = args
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().Vulnerabilities(rctx, args["limit"].(*int), args["offset"].(*int))
+		return ec.resolvers.Query().Vulnerabilities(rctx, args["limit"].(int), args["offset"].(int))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -875,7 +875,7 @@ func (ec *executionContext) _Query_dependencies(ctx context.Context, field graph
 	fc.Args = args
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().Dependencies(rctx, args["limit"].(*int), args["offset"].(*int))
+		return ec.resolvers.Query().Dependencies(rctx, args["limit"].(int), args["offset"].(int))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -956,7 +956,7 @@ func (ec *executionContext) _Query_devices(ctx context.Context, field graphql.Co
 	fc.Args = args
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().Devices(rctx, args["limit"].(*int), args["offset"].(*int))
+		return ec.resolvers.Query().Devices(rctx, args["limit"].(int), args["offset"].(int))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -3502,6 +3502,21 @@ func (ec *executionContext) marshalNID2string(ctx context.Context, sel ast.Selec
 	return res
 }
 
+func (ec *executionContext) unmarshalNInt2int(ctx context.Context, v interface{}) (int, error) {
+	res, err := graphql.UnmarshalInt(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNInt2int(ctx context.Context, sel ast.SelectionSet, v int) graphql.Marshaler {
+	res := graphql.MarshalInt(v)
+	if res == graphql.Null {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "must not be null")
+		}
+	}
+	return res
+}
+
 func (ec *executionContext) unmarshalNSeverity2githubᚗcomᚋaroraᚑadityaᚋmonorepoᚋapplicationᚑserverᚋgraphᚋmodelᚐSeverity(ctx context.Context, v interface{}) (model.Severity, error) {
 	var res model.Severity
 	err := res.UnmarshalGQL(v)
@@ -3904,22 +3919,6 @@ func (ec *executionContext) marshalODevice2ᚖgithubᚗcomᚋaroraᚑadityaᚋmo
 		return graphql.Null
 	}
 	return ec._Device(ctx, sel, v)
-}
-
-func (ec *executionContext) unmarshalOInt2ᚖint(ctx context.Context, v interface{}) (*int, error) {
-	if v == nil {
-		return nil, nil
-	}
-	res, err := graphql.UnmarshalInt(v)
-	return &res, graphql.ErrorOnPath(ctx, err)
-}
-
-func (ec *executionContext) marshalOInt2ᚖint(ctx context.Context, sel ast.SelectionSet, v *int) graphql.Marshaler {
-	if v == nil {
-		return graphql.Null
-	}
-	res := graphql.MarshalInt(*v)
-	return res
 }
 
 func (ec *executionContext) unmarshalOString2string(ctx context.Context, v interface{}) (string, error) {

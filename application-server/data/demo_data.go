@@ -1,20 +1,22 @@
-package main
+package data
 
-import (
-	"github.com/arora-aditya/monorepo/application-server/graph"
-	"github.com/arora-aditya/monorepo/application-server/graph/model"
-)
+import "github.com/arora-aditya/monorepo/application-server/graph/model"
 
-func NewMockResolver() *graph.Resolver {
-	dependencies := []*model.Dependency{
+var (
+	dependencies []*model.Dependency = []*model.Dependency{
 		{
 			ID:      "1",
 			Name:    "b2sdk",
 			Version: "1.2.3",
 		},
+		{
+			ID:      "2",
+			Name:    "django",
+			Version: "4.4.3",
+		},
 	}
 
-	vulnerabilities := []*model.Vulnerability{
+	vulnerabilities []*model.Vulnerability = []*model.Vulnerability{
 		{
 			Permalink:              "https://github.com/advisories/GHSA-p867-fxfr-ph2w",
 			Severity:               "MODERATE",
@@ -30,16 +32,10 @@ func NewMockResolver() *graph.Resolver {
 		},
 	}
 
-	devices := []*model.Device{
+	devices []*model.Device = []*model.Device{
 		{
 			ID:   "1",
 			Name: "acme-security-camera",
 		},
 	}
-
-	return &graph.Resolver{
-		Dependencies:    dependencies,
-		Vulnerabilities: vulnerabilities,
-		Devices:         devices,
-	}
-}
+)

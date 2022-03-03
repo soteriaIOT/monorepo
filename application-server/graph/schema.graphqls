@@ -32,11 +32,11 @@ type Device {
 
 type Query {
   vulnerability(id: String!): Vulnerability
-  vulnerabilities(limit: Int = 20, offset: Int = 0): [Vulnerability!]!
+  vulnerabilities(limit: Int! = 20, offset: Int! = 0): [Vulnerability!]!
 
   dependency(id: String!): Dependency
-  dependencies(limit: Int = 20, offset: Int = 0): [Dependency!]!
+  dependencies(limit: Int! = 20, offset: Int! = 0): [Dependency!]!
 
   device(id: String!): Device
-  devices(limit: Int = 20, offset: Int = 0): [Device!]!
+  devices(limit: Int! = 20, offset: Int! = 0): [Device!]!
 }
