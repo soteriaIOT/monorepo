@@ -371,7 +371,7 @@ type Vulnerability {
   summary: String!
   patch_available: Boolean!
   key_is_patched: Boolean!
-  name: ID!
+  name: String!
 
   # These fields are from https://github.com/arora-aditya/monorepo/blob/dependabot/vulnerability/query_github/dependabot_data.json
   dependency: Dependency # this is the dependency name
@@ -1384,7 +1384,7 @@ func (ec *executionContext) _Vulnerability_name(ctx context.Context, field graph
 	}
 	res := resTmp.(string)
 	fc.Result = res
-	return ec.marshalNID2string(ctx, field.Selections, res)
+	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Vulnerability_dependency(ctx context.Context, field graphql.CollectedField, obj *model.Vulnerability) (ret graphql.Marshaler) {

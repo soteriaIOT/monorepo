@@ -10,7 +10,7 @@ type Vulnerability {
   summary: String!
   patch_available: Boolean!
   key_is_patched: Boolean!
-  name: ID!
+  name: String!
 
   # These fields are from https://github.com/arora-aditya/monorepo/blob/dependabot/vulnerability/query_github/dependabot_data.json
   dependency: Dependency # this is the dependency name
