@@ -65,7 +65,7 @@ func (c *DynamoClient) VerifyByUsernameAndPassword(username string, password str
 		panic(fmt.Sprintf("Failed to unmarshal Record, %v", err))
 	}
 
-	if !CheckPasswordHash("thisisatestpassword", item.Password) {
+	if !CheckPasswordHash(password, item.Password) {
 		return nil, fmt.Errorf("Invalid password")
 	}
 
