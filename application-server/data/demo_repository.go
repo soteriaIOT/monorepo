@@ -40,7 +40,6 @@ func (r *demoDataRepository) CreateUser(input model.User) (*model.Token, error) 
 
 func (r *demoDataRepository) GetVulnerability(ctx context.Context, name string) (*model.Vulnerability, error) {
 	user := auth.GetAuthFromContext(ctx)
-	fmt.Println(user)
 	if user.Username == "" {
 		return nil, fmt.Errorf("access denied")
 	}
@@ -79,7 +78,6 @@ func (r *demoDataRepository) GetDependency(ctx context.Context, id string) (*mod
 
 func (r *demoDataRepository) GetDependencies(ctx context.Context, limit int, offset int) ([]*model.Dependency, error) {
 	user := auth.GetAuthFromContext(ctx)
-	fmt.Println(user)
 	if user.Username == "" {
 		return []*model.Dependency{}, fmt.Errorf("access denied")
 	}
@@ -92,7 +90,6 @@ func (r *demoDataRepository) GetDependencies(ctx context.Context, limit int, off
 
 func (r *demoDataRepository) GetDevice(ctx context.Context, id string) (*model.Device, error) {
 	user := auth.GetAuthFromContext(ctx)
-	fmt.Println(user)
 	if user.Username == "" {
 		return nil, fmt.Errorf("access denied")
 	}
@@ -106,7 +103,6 @@ func (r *demoDataRepository) GetDevice(ctx context.Context, id string) (*model.D
 
 func (r *demoDataRepository) GetDevices(ctx context.Context, limit int, offset int) ([]*model.Device, error) {
 	user := auth.GetAuthFromContext(ctx)
-	fmt.Println(user)
 	if user.Username == "" {
 		return []*model.Device{}, fmt.Errorf("access denied")
 	}
