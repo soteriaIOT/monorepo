@@ -26,6 +26,17 @@ type Login struct {
 	Password string `json:"password"`
 }
 
+type Token struct {
+	Token     string `json:"token"`
+	ExpiredAt int    `json:"expired_at"`
+}
+
+type User struct {
+	Name     string `json:"name"`
+	Username string `json:"username"`
+	Password string `json:"password"`
+}
+
 type Vulnerability struct {
 	ID                 string      `json:"id"`
 	Permalink          string      `json:"permalink"`

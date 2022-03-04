@@ -2,6 +2,9 @@ package data
 
 import (
 	"math"
+	"fmt"
+	"context"
+	
 
 	"github.com/arora-aditya/monorepo/application-server/auth"
 	"github.com/arora-aditya/monorepo/application-server/graph/model"
@@ -25,12 +28,22 @@ type demoDataRepository struct {
 	Devices         []*model.Device
 }
 
-func (r *demoDataRepository) Login(input model.Login) (bool, error) {
+func (r *demoDataRepository) Login(input model.Login) (*model.Token, error) {
 	scv := auth.NewDynamoSvc()
-	return scv.VerifyByUsernameAndPassword(input.Username, input.Password), nil
+	return scv.VerifyByUsernameAndPassword(input.Username, input.Password)
 }
 
-func (r *demoDataRepository) GetVulnerability(name string) (*model.Vulnerability, error) {
+func (r *demoDataRepository) CreateUser(input model.User) (*model.Token, error) {
+	scv := auth.NewDynamoSvc()
+	return scv.CreateUser(input.Name, input.Username, input.Password)
+}
+
+func (r *demoDataRepository) GetVulnerability(ctx context.Context, name string) (*model.Vulnerability, error) {
+	user := auth.GetAuthFromContext(ctx)
+	fmt.Println(user)
+	if user.Username == "" {
+		return nil, fmt.Errorf("access denied")
+	}
 	for _, v := range r.Vulnerabilities {
 		if v.Name == name {
 			return v, nil
@@ -39,7 +52,11 @@ func (r *demoDataRepository) GetVulnerability(name string) (*model.Vulnerability
 	return nil, nil
 }
 
-func (r *demoDataRepository) GetVulnerabilities(limit int, offset int) ([]*model.Vulnerability, error) {
+func (r *demoDataRepository) GetVulnerabilities(ctx context.Context, limit int, offset int) ([]*model.Vulnerability, error) {
+	user := auth.GetAuthFromContext(ctx)
+	if user.Username == "" {
+		return []*model.Vulnerability{}, fmt.Errorf("access denied")
+	}
 	if offset > len(r.Vulnerabilities) {
 		return []*model.Vulnerability{}, nil
 	}
@@ -47,7 +64,11 @@ func (r *demoDataRepository) GetVulnerabilities(limit int, offset int) ([]*model
 	return r.Vulnerabilities[offset:bound], nil
 }
 
-func (r *demoDataRepository) GetDependency(id string) (*model.Dependency, error) {
+func (r *demoDataRepository) GetDependency(ctx context.Context, id string) (*model.Dependency, error) {
+	user := auth.GetAuthFromContext(ctx)
+	if user.Username == "" {
+		return nil, fmt.Errorf("access denied")
+	}
 	for _, d := range r.Dependencies {
 		if d.ID == id {
 			return d, nil
@@ -56,7 +77,12 @@ func (r *demoDataRepository) GetDependency(id string) (*model.Dependency, error)
 	return nil, nil
 }
 
-func (r *demoDataRepository) GetDependencies(limit int, offset int) ([]*model.Dependency, error) {
+func (r *demoDataRepository) GetDependencies(ctx context.Context, limit int, offset int) ([]*model.Dependency, error) {
+	user := auth.GetAuthFromContext(ctx)
+	fmt.Println(user)
+	if user.Username == "" {
+		return []*model.Dependency{}, fmt.Errorf("access denied")
+	}
 	if offset > len(r.Dependencies) {
 		return []*model.Dependency{}, nil
 	}
@@ -64,7 +90,12 @@ func (r *demoDataRepository) GetDependencies(limit int, offset int) ([]*model.De
 	return r.Dependencies[offset:bound], nil
 }
 
-func (r *demoDataRepository) GetDevice(id string) (*model.Device, error) {
+func (r *demoDataRepository) GetDevice(ctx context.Context, id string) (*model.Device, error) {
+	user := auth.GetAuthFromContext(ctx)
+	fmt.Println(user)
+	if user.Username == "" {
+		return nil, fmt.Errorf("access denied")
+	}
 	for _, d := range r.Devices {
 		if d.ID == id {
 			return d, nil
@@ -73,7 +104,12 @@ func (r *demoDataRepository) GetDevice(id string) (*model.Device, error) {
 	return nil, nil
 }
 
-func (r *demoDataRepository) GetDevices(limit int, offset int) ([]*model.Device, error) {
+func (r *demoDataRepository) GetDevices(ctx context.Context, limit int, offset int) ([]*model.Device, error) {
+	user := auth.GetAuthFromContext(ctx)
+	fmt.Println(user)
+	if user.Username == "" {
+		return []*model.Device{}, fmt.Errorf("access denied")
+	}
 	if offset > len(r.Devices) {
 		return []*model.Device{}, nil
 	}

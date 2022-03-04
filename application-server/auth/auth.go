@@ -4,20 +4,22 @@ import (
 	"fmt"
 	"log"
 	"os"
-
+	"time"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbattribute"
+
+	"github.com/arora-aditya/monorepo/application-server/graph/model"
 )
 
 const USER_TABLE = "login-information"
 
-type User struct {
-	Username string
-	Name     string
-	Password string
+type AWSUser struct {
+	Username string `json:"username"`
+	Name     string `json:"name"`
+	Password string `json:"password"`
 }
 
 type DynamoClient struct {
@@ -40,7 +42,7 @@ func NewDynamoSvc() *DynamoClient {
 }
 
 // VerifyByUsernameAndPassword determines if a user with a specific login exists or not
-func (c *DynamoClient) VerifyByUsernameAndPassword(username string, password string) bool {
+func (c *DynamoClient) VerifyByUsernameAndPassword(username string, password string) (*model.Token, error){
 	result, err := c.dynamoSvc.GetItem(&dynamodb.GetItemInput{
 		TableName: aws.String(USER_TABLE),
 		Key: map[string]*dynamodb.AttributeValue{
@@ -54,18 +56,52 @@ func (c *DynamoClient) VerifyByUsernameAndPassword(username string, password str
 	}
 
 	if result.Item == nil {
-		return false
+		return nil, fmt.Errorf("User not found")
 	}
 
-	item := User{}
+	item := AWSUser{}
 	err = dynamodbattribute.UnmarshalMap(result.Item, &item)
 	if err != nil {
 		panic(fmt.Sprintf("Failed to unmarshal Record, %v", err))
 	}
 
-	fmt.Println("Found item:")
-	fmt.Println("User:  ", item.Name)
-	fmt.Println("Username:  ", item.Username)
-	fmt.Println("Password:", item.Password)
-	return item.Password == password
+	if item.Password != password {
+		return nil, fmt.Errorf("Invalid password")
+	}
+
+	expiredAt := int(time.Now().Add(time.Hour * 1).Unix())
+
+	return &model.Token{
+		Token: GenerateJwt(item.Username, int64(expiredAt)),
+		ExpiredAt: expiredAt,
+	}, nil
 }
+
+func (c *DynamoClient) CreateUser(name string, username string, password string) (*model.Token, error) {
+	item := AWSUser{
+		Username: username,
+		Name: name,
+		Password: password,
+	}
+
+	av, err := dynamodbattribute.MarshalMap(item)
+	if err != nil {
+		panic(fmt.Sprintf("Failed to marshal Record, %v", err))
+	}
+
+	_, err = c.dynamoSvc.PutItem(&dynamodb.PutItemInput{
+		Item:      av,
+		TableName: aws.String(USER_TABLE),
+	})
+	if err != nil {
+		panic(fmt.Sprintf("Failed to put item, %v", err))
+	}
+
+	expiredAt := int(time.Now().Add(time.Hour * 1).Unix())
+
+	return &model.Token{
+		Token: GenerateJwt(item.Username, int64(expiredAt)),
+		ExpiredAt: expiredAt,
+	}, nil
+}
+

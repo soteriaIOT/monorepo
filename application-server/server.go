@@ -10,6 +10,7 @@ import (
 	"github.com/arora-aditya/monorepo/application-server/data"
 	"github.com/arora-aditya/monorepo/application-server/graph"
 	"github.com/arora-aditya/monorepo/application-server/graph/generated"
+	"github.com/arora-aditya/monorepo/application-server/auth"
 	"github.com/go-chi/chi/v5"
 	"github.com/rs/cors"
 )
@@ -24,6 +25,8 @@ func main() {
 		AllowCredentials: true,
 		Debug:            true,
 	}).Handler)
+
+	router.Use(auth.JwtMiddleware())
 
 	port := os.Getenv("PORT")
 	if port == "" {

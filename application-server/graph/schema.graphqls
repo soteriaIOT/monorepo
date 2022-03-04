@@ -50,6 +50,18 @@ input Login {
     password: String!
 }
 
+input User {
+    name: String!
+    username: String!
+    password: String!
+}
+
+type Token{
+  token: String!
+  expired_at: Int!
+}
+
 type Mutation {
-  login(input: Login!): Boolean!
+  createUser(input: User!): Token!
+  login(input: Login!): Token!
 }
