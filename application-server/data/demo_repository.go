@@ -3,6 +3,7 @@ package data
 import (
 	"math"
 
+	"github.com/arora-aditya/monorepo/application-server/auth"
 	"github.com/arora-aditya/monorepo/application-server/graph/model"
 )
 
@@ -22,6 +23,11 @@ type demoDataRepository struct {
 	Vulnerabilities []*model.Vulnerability
 	Dependencies    []*model.Dependency
 	Devices         []*model.Device
+}
+
+func (r *demoDataRepository) Login(input model.Login) (bool, error) {
+	scv := auth.NewDynamoSvc()
+	return scv.VerifyByUsernameAndPassword(input.Username, input.Password), nil
 }
 
 func (r *demoDataRepository) GetVulnerability(name string) (*model.Vulnerability, error) {

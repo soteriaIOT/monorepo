@@ -44,3 +44,12 @@ type Query {
   device(id: String!): Device
   devices(limit: Int! = 20, offset: Int! = 0): [Device!]!
 }
+
+input Login {
+    username: String!
+    password: String!
+}
+
+type Mutation {
+  login(input: Login!): Boolean!
+}

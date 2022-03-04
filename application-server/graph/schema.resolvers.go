@@ -10,6 +10,10 @@ import (
 	"github.com/arora-aditya/monorepo/application-server/graph/model"
 )
 
+func (r *mutationResolver) Login(ctx context.Context, input model.Login) (bool, error) {
+	return r.Repository.Login(input)
+}
+
 func (r *queryResolver) Vulnerability(ctx context.Context, id string) (*model.Vulnerability, error) {
 	return r.Repository.GetVulnerability(id)
 }
@@ -34,7 +38,11 @@ func (r *queryResolver) Devices(ctx context.Context, limit int, offset int) ([]*
 	return r.Repository.GetDevices(limit, offset)
 }
 
+// Mutation returns generated.MutationResolver implementation.
+func (r *Resolver) Mutation() generated.MutationResolver { return &mutationResolver{r} }
+
 // Query returns generated.QueryResolver implementation.
 func (r *Resolver) Query() generated.QueryResolver { return &queryResolver{r} }
 
+type mutationResolver struct{ *Resolver }
 type queryResolver struct{ *Resolver }

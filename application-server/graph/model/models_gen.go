@@ -21,6 +21,11 @@ type Device struct {
 	Vulnerabilities []*Vulnerability `json:"vulnerabilities"`
 }
 
+type Login struct {
+	Username string `json:"username"`
+	Password string `json:"password"`
+}
+
 type Vulnerability struct {
 	ID                 string      `json:"id"`
 	Permalink          string      `json:"permalink"`

@@ -12,4 +12,6 @@ type Repository interface {
 
 	GetDevice(id string) (*model.Device, error)
 	GetDevices(limit int, offset int) ([]*model.Device, error)
+
+	Login(input model.Login) (bool, error)
 }
