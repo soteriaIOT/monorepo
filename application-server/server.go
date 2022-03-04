@@ -14,7 +14,7 @@ import (
 	"github.com/rs/cors"
 )
 
-const defaultPort = "8080"
+const defaultPort = "8081"
 
 func main() {
 	router := chi.NewRouter()

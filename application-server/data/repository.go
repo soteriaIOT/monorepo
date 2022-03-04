@@ -7,7 +7,7 @@ type Repository interface {
 	GetVulnerability(id string) (*model.Vulnerability, error)
 	GetVulnerabilities(limit int, offset int) ([]*model.Vulnerability, error)
 
-	GetDependency(id string) (*model.Dependency, error)
+	GetDependency(name string) (*model.Dependency, error)
 	GetDependencies(limit int, offset int) ([]*model.Dependency, error)
 
 	GetDevice(id string) (*model.Device, error)

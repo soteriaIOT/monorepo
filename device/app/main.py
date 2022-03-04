@@ -103,7 +103,7 @@ def send_metrics():
     }
     device_fields = {
         "cpu": device_data["cpu"],
-        "cpu_freq": device_data["cpu_freq"],
+        "cpu_freq": float(device_data["cpu_freq"]),
         "cpu_temp": device_data["cpu_temp"],
         "memory_usage": device_data["memory"],
         "running_processes": device_data["running_processes"],

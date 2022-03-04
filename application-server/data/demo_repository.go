@@ -7,10 +7,14 @@ import (
 )
 
 func NewDemoRepository() Repository {
+	for _, s := range vulnerable_devices {
+		s.Vulnerabilities = vulnerabilities
+	}
+
 	return &demoDataRepository{
-		Dependencies:    dependencies,
+		Dependencies:    append(vulnerable_dependencies, good_dependencies...),
 		Vulnerabilities: vulnerabilities,
-		Devices:         devices,
+		Devices:         append(vulnerable_devices, good_devices...),
 	}
 }
 
@@ -20,9 +24,9 @@ type demoDataRepository struct {
 	Devices         []*model.Device
 }
 
-func (r *demoDataRepository) GetVulnerability(id string) (*model.Vulnerability, error) {
+func (r *demoDataRepository) GetVulnerability(name string) (*model.Vulnerability, error) {
 	for _, v := range r.Vulnerabilities {
-		if v.ID == id {
+		if v.Name == name {
 			return v, nil
 		}
 	}
