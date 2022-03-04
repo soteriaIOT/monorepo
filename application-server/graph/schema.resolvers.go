@@ -5,6 +5,7 @@ package graph
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/arora-aditya/monorepo/application-server/graph/generated"
 	"github.com/arora-aditya/monorepo/application-server/graph/model"
@@ -16,6 +17,16 @@ func (r *mutationResolver) CreateUser(ctx context.Context, input model.User) (*m
 
 func (r *mutationResolver) Login(ctx context.Context, input model.Login) (*model.Token, error) {
 	return r.Repository.Login(input)
+}
+
+func (r *mutationResolver) UpdateVulnerabilities(ctx context.Context, input []string) ([]*model.Vulnerability, error) {
+	// TODO: Send kafkaj obj to be updated on device
+	panic(fmt.Errorf("not implemented"))
+}
+
+func (r *mutationResolver) CheckVulnerabilities(ctx context.Context, input []string) ([]*model.Vulnerability, error) {
+	// TODO: Send kafka obj to device, not currently needed at the moment
+	panic(fmt.Errorf("not implemented"))
 }
 
 func (r *queryResolver) Vulnerability(ctx context.Context, id string) (*model.Vulnerability, error) {
