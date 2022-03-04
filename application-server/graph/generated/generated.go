@@ -364,7 +364,7 @@ var sources = []*ast.Source{
 }
 
 type Vulnerability {
-  id: Int!
+  id: ID!
   # These fields are from https://github.com/arora-aditya/monorepo/blob/dependabot/vulnerability/query_github/frontend_data.json
   permalink: String!
   severity: Severity! # note that this will be one of "LOW, MODERATE,HIGH"
@@ -1172,9 +1172,9 @@ func (ec *executionContext) _Vulnerability_id(ctx context.Context, field graphql
 		}
 		return graphql.Null
 	}
-	res := resTmp.(int)
+	res := resTmp.(string)
 	fc.Result = res
-	return ec.marshalNInt2int(ctx, field.Selections, res)
+	return ec.marshalNID2string(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Vulnerability_permalink(ctx context.Context, field graphql.CollectedField, obj *model.Vulnerability) (ret graphql.Marshaler) {

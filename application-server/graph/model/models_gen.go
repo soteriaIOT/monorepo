@@ -22,7 +22,7 @@ type Device struct {
 }
 
 type Vulnerability struct {
-	ID                 int         `json:"id"`
+	ID                 string      `json:"id"`
 	Permalink          string      `json:"permalink"`
 	Severity           Severity    `json:"severity"`
 	Summary            string      `json:"summary"`
