@@ -15,22 +15,25 @@ type Dependency struct {
 }
 
 type Device struct {
-	ID   string `json:"id"`
-	Name string `json:"name"`
+	ID              string           `json:"id"`
+	Name            string           `json:"name"`
+	Dependencies    []*Dependency    `json:"dependencies"`
+	Vulnerabilities []*Vulnerability `json:"vulnerabilities"`
 }
 
 type Vulnerability struct {
-	Permalink              string        `json:"permalink"`
-	Severity               Severity      `json:"severity"`
-	Summary                string        `json:"summary"`
-	VulnerableVersionRange string        `json:"vulnerable_version_range"`
-	PatchAvailable         bool          `json:"patch_available"`
-	KeyIsPatched           bool          `json:"key_is_patched"`
-	ID                     string        `json:"id"`
-	Dependencies           []*Dependency `json:"dependencies"`
-	PatchedVersions        []string      `json:"patched_versions"`
-	UnaffectedVersions     []string      `json:"unaffected_versions"`
-	AffectedVersions       []string      `json:"affected_versions"`
+	ID                 string      `json:"id"`
+	Permalink          string      `json:"permalink"`
+	Severity           Severity    `json:"severity"`
+	Summary            string      `json:"summary"`
+	PatchAvailable     bool        `json:"patch_available"`
+	KeyIsPatched       bool        `json:"key_is_patched"`
+	Name               string      `json:"name"`
+	Dependency         *Dependency `json:"dependency"`
+	PatchedVersions    []string    `json:"patched_versions"`
+	UnaffectedVersions []string    `json:"unaffected_versions"`
+	AffectedVersions   []string    `json:"affected_versions"`
+	DevicesAffected    []*Device   `json:"devices_affected"`
 }
 
 type Severity string
