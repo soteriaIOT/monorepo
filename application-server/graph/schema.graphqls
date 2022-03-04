@@ -44,3 +44,24 @@ type Query {
   device(id: String!): Device
   devices(limit: Int! = 20, offset: Int! = 0): [Device!]!
 }
+
+input Login {
+    username: String!
+    password: String!
+}
+
+input User {
+    name: String!
+    username: String!
+    password: String!
+}
+
+type Token{
+  token: String!
+  expired_at: Int!
+}
+
+type Mutation {
+  createUser(input: User!): Token!
+  login(input: Login!): Token!
+}

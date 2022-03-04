@@ -10,6 +10,7 @@ import (
 	"github.com/arora-aditya/monorepo/application-server/data"
 	"github.com/arora-aditya/monorepo/application-server/graph"
 	"github.com/arora-aditya/monorepo/application-server/graph/generated"
+	"github.com/arora-aditya/monorepo/application-server/auth"
 	"github.com/go-chi/chi/v5"
 	"github.com/rs/cors"
 )
@@ -21,9 +22,13 @@ func main() {
 
 	router.Use(cors.New(cors.Options{
 		AllowedOrigins:   []string{"*"},
+		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type", "X-CSRF-Token"},
 		AllowCredentials: true,
 		Debug:            true,
 	}).Handler)
+
+	router.Use(auth.JwtMiddleware())
 
 	port := os.Getenv("PORT")
 	if port == "" {

@@ -4,9 +4,12 @@ go 1.17
 
 require (
 	github.com/99designs/gqlgen v0.16.0
+	github.com/aws/aws-sdk-go v1.43.11
 	github.com/go-chi/chi/v5 v5.0.7
+	github.com/golang-jwt/jwt v3.2.2+incompatible
 	github.com/rs/cors v1.8.2
 	github.com/vektah/gqlparser/v2 v2.2.0
+	golang.org/x/crypto v0.0.0-20200622213623-75b288015ac9
 )
 
 require (
@@ -14,6 +17,7 @@ require (
 	github.com/cpuguy83/go-md2man/v2 v2.0.1 // indirect
 	github.com/gorilla/websocket v1.4.2 // indirect
 	github.com/hashicorp/golang-lru v0.5.0 // indirect
+	github.com/jmespath/go-jmespath v0.4.0 // indirect
 	github.com/matryer/moq v0.2.3 // indirect
 	github.com/mitchellh/mapstructure v1.2.3 // indirect
 	github.com/russross/blackfriday/v2 v2.1.0 // indirect
