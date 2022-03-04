@@ -65,7 +65,7 @@ func (c *DynamoClient) VerifyByUsernameAndPassword(username string, password str
 		panic(fmt.Sprintf("Failed to unmarshal Record, %v", err))
 	}
 
-	if item.Password != password {
+	if !CheckPasswordHash("thisisatestpassword", item.Password) {
 		return nil, fmt.Errorf("Invalid password")
 	}
 
@@ -78,10 +78,14 @@ func (c *DynamoClient) VerifyByUsernameAndPassword(username string, password str
 }
 
 func (c *DynamoClient) CreateUser(name string, username string, password string) (*model.Token, error) {
+	hashedPassword, err := HashPassword(password)
+	if err != nil {
+		return nil, err
+	}
 	item := AWSUser{
 		Username: username,
 		Name: name,
-		Password: password,
+		Password: hashedPassword,
 	}
 
 	av, err := dynamodbattribute.MarshalMap(item)
