@@ -3,7 +3,7 @@ enum Severity {
 }
 
 type Vulnerability {
-  id: Int!
+  id: ID!
   # These fields are from https://github.com/arora-aditya/monorepo/blob/dependabot/vulnerability/query_github/frontend_data.json
   permalink: String!
   severity: Severity! # note that this will be one of "LOW, MODERATE,HIGH"
