@@ -66,7 +66,7 @@ class Patcher:
                 self._rebuild_service()
                 self._start_service()
                 REQUIREMENTS = read_requirements("../app/requirements.txt")
-                produce_message("requirements", DEVICE_ID, "\n".join(REQUIREMENTS)) 
+                produce_message("device-requirements", DEVICE_ID, "\n".join(REQUIREMENTS)) 
 
             print(device, package_and_version)
         
