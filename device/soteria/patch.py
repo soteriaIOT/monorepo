@@ -1,9 +1,9 @@
 import sys
 sys.path.append("./common")
 sys.path.append("..")
-from common.kafka_helper import produce_message
-from common.kafka_helper import consume_confluence
-from common.kafka_helper import read_requirements
+from kafka_helper import produce_message
+from kafka_helper import consume_confluence
+from kafka_helper import read_requirements
 from common.tags import COMMON_TAGS
 
 
