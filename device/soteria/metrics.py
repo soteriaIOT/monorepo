@@ -40,7 +40,7 @@ def get_device_stats():
 
         return dict(
             cpu=cpu_usage,
-            cpu_freq=cpu_freq,
+            cpu_freq=float(cpu_freq),
             cpu_temp=cpu_temp,
             memory=memory,
             running_processes=running_processes,

@@ -1,4 +1,6 @@
-from random import choice
+from typing import List
+from typing import Union
+
 from kafka import KafkaProducer
 from confluent_kafka import Consumer
 from dotenv import dotenv_values
@@ -9,12 +11,15 @@ DEVICE_ID = COMMON_TAGS.get("host")
 config = dotenv_values()
 KAFKA_IP = config.get("kafka_ip")
 
+
 def consume_confluence(topic: str):
-    consumer = Consumer({
-        'bootstrap.servers': KAFKA_IP,
-        'group.id': DEVICE_ID,
-        'auto.offset.reset': 'earliest'
-    })
+    consumer = Consumer(
+        {
+            "bootstrap.servers": KAFKA_IP,
+            "group.id": DEVICE_ID,
+            "auto.offset.reset": "earliest",
+        }
+    )
     consumer.subscribe([topic])
     while True:
         try:
@@ -30,19 +35,15 @@ def consume_confluence(topic: str):
             return
 
 
-def produce_message(topic: str, key: str, value: str):
+def produce_message(topic: str, key: str, value: Union[str, List]):
+    if isinstance(value, list):
+        value = "\n".join(value)
     producer = KafkaProducer(
         bootstrap_servers=KAFKA_IP,
         key_serializer=str.encode,
         value_serializer=str.encode,
     )
     future = producer.send(topic, key=key, value=value)
-    result = future.get(timeout=60)
+    _ = future.get(timeout=60)
     producer.flush()
     producer.close()
-    print("DONE", result)
-
-
-def read_requirements(requirements_file: str):
-    with open(requirements_file) as f:
-        return [line.strip() for line in f.readlines()]
