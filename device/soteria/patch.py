@@ -50,6 +50,7 @@ class Patcher:
         """
         self.image, _ = self.docker.images.build(
             path=self.docker_file_folder,
+            network_mode="host",
             tag="device-app:latest"
         )
 
