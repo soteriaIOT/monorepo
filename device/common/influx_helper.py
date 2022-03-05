@@ -1,9 +1,7 @@
-#!pip install influxdb
+from datetime import datetime
 
+from dotenv import dotenv_values
 from influxdb import InfluxDBClient
-import datetime
-import random
-import time
 
 
 class InfluxHelper:
@@ -19,20 +17,20 @@ class InfluxHelper:
         tags={"host": "local", "region": "us-east2"},
     ):
         if time is None:
-            time = datetime.datetime.utcnow()
+            time = datetime.utcnow()
         payload = {"measurement": name, "tags": tags, "time": time, "fields": fields}
         self.payloads.append(payload)
 
     def send(self):
         self.client.write_points(self.payloads)
-        # print(self.payloads)
         self.payloads = []
 
 
-# influxHelper = InfluxHelper()
-# while(True):
-# cpu_load = random.random()
-# influxHelper.add_metric(name="CPU_SAMPLE", fields={"value": cpu_load})
-# influxHelper.send()
-# print(cpu_load)
-# time.sleep(10)
+config = dotenv_values()
+INFLUX_USER = config.get("influx_username")
+INFLUX_PW = config.get("influx_password")
+EC2_IP = config.get("ec2_ip")
+
+INFLUX_HELPER = InfluxHelper(
+    ip=EC2_IP, port=8086, username=INFLUX_USER, password=INFLUX_PW, db="test"
+)
