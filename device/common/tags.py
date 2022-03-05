@@ -3,4 +3,3 @@ COMMON_TAGS = {
     "host": "docker",
     "location": "University of Waterloo",
 }
-

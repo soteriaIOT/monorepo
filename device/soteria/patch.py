@@ -1,96 +1,80 @@
+import sys
+sys.path.append("./common")
+sys.path.append("..")
+from common.kafka_helper import produce_message
+from common.kafka_helper import consume_confluence
+from common.kafka_helper import read_requirements
+from common.tags import COMMON_TAGS
 
-import subprocess
-import os 
-import signal
 
-from http.server import HTTPServer
-from http.server import BaseHTTPRequestHandler
-from urllib.parse import urlparse
-from urllib.parse import parse_qs
-
-PATH = "~/soteria/monorepo/"
-
-class PatchServer(BaseHTTPRequestHandler):
-
+class Patcher:
     def _update_requirements(self, updated_requirements: str):
         """
         Update the requirements file.
         """
-        with open("requirements.txt", "w") as f:
+        with open("../app/requirements.txt", "w") as f:
             f.write(updated_requirements)
-
-    def _run_pip_install(self):
+    
+    def _rebuild_service(self):
         """
-        Run pip install.
+        Rebuild the service.
         """
-        command = f"""
-            cd {PATH}device/app;
-            source bin/activate;
-            pip3 install -r requirements.txt;
-        """
-        ret = subprocess.run(command, capture_output=True, shell=True)
-        print(ret.stdout.decode())
+        print("REBUILD")
 
     def _stop_service(self):
         """
         Stop the service.
         """
-        
-        def get_pid(name):
-            # https://stackoverflow.com/questions/26688936/how-to-get-pid-by-process-name
-            for line in os.popen("ps aux | grep 'python3 main.py' | grep -v grep"):
-                pid = int(line.split()[1])
-                return pid
-        
-        def kill_pid(pid: int):
-            # https://stackoverflow.com/questions/12309269/how-to-kill-a-process-started-with-subprocess-in-python
-            print("Killing process with pid {}".format(pid))
-            os.kill(pid, signal.SIGKILL)
-        
-        pid = get_pid("python3")
-        kill_pid(pid)
+        print("STOP")
 
+        
     def _start_service(self):
         """
         Restart the service.
         """
-        command = f"""sh spawn.sh"""
-        ret = subprocess.run(command, shell=True)
+        print("START")
     
+    def watch(self):
+        """
+        Watch for changes to the requirements file.
+        """
+        DEVICE_ID = COMMON_TAGS.get("host")
+        
+        REQUIREMENTS = read_requirements("../app/requirements.txt")
+        produce_message("requirements", DEVICE_ID, "\n".join(REQUIREMENTS)) 
+        for message in consume_confluence("device-updates"):
+            key = message.key()
+            value = message.value()
+            if key is None:
+                print("Key: {}".format(key))
+                continue
+            if value is None:
+                print("Value: {}".format(value))
+                continue
 
-    def do_GET(self):
-        query = parse_qs(urlparse(self.path).query)
-        updated_requirements = "\n".join([f"{key}=={query[key][0]}" for key in query])
-        self._stop_service()
+            device, package_and_version = key.decode("utf-8"), value.decode("utf-8") 
+            if str(device) == DEVICE_ID:
+                print("Got update for device:", device, package_and_version)
+                package, version = package_and_version.split("==")
+                updated_requirements = "\n".join([
+                    line if not line.startswith(package)
+                    else "{}=={}".format(package, version) for line in REQUIREMENTS
+                    
+                ])
+                self._update_requirements(updated_requirements)
+                self._stop_service()
+                self._rebuild_service()
+                self._start_service()
+                REQUIREMENTS = read_requirements("../app/requirements.txt")
+                produce_message("requirements", DEVICE_ID, "\n".join(REQUIREMENTS)) 
 
-        self._update_requirements(updated_requirements)
-        self._run_pip_install()
-        self._start_service()
-        self.send_response(200)
-        self.send_header('Content-type', 'text/html')
-        self.end_headers()
-        self.wfile.write(bytes(updated_requirements, "utf8"))
-        return
+            print(device, package_and_version)
+        
+        
 
-server = HTTPServer(("localhost", 7000), PatchServer)
-server.serve_forever()
 
 
 
 if __name__ == "__main__":
-    P = PatchServer()
-    P._stop_service()
-    updated_requirements = """backoff==1.11.1
-certifi==2021.10.8
-chardet==3.0.4
-idna==2.7
-psutil==5.9.0
-python-dotenv==0.19.2
-ratelimit==2.2.1
-requests==2.20.0
-speedtest-cli==2.1.3
-urllib3==1.26.5"""
-    P._update_requirements(updated_requirements)
-    P._run_pip_install()
-    P._start_service()
-    
+    patcher = Patcher()
+    patcher.watch()

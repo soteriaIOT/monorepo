@@ -1,1 +1,7 @@
 .env
+lib/
+include/
+bin/
+__pycache__
+LICENSE.txt
+pyvenv.cfg

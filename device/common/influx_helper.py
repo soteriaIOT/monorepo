@@ -1,8 +1,8 @@
-
 from datetime import datetime
 
 from dotenv import dotenv_values
 from influxdb import InfluxDBClient
+
 
 class InfluxHelper:
     def __init__(self, ip="", port=8086, username="", password="", db=""):

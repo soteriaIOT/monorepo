@@ -1,4 +1,3 @@
-
 import speedtest
 import psutil
 import time
@@ -7,6 +6,7 @@ from common.influx_helper import INFLUX_HELPER
 from common.tags import COMMON_TAGS
 
 ONE_MINUTE = 60
+
 
 def get_wifi():
     s = speedtest.Speedtest()
@@ -65,7 +65,7 @@ def send_metrics():
         "memory_usage": device_data["memory"],
         "running_processes": device_data["running_processes"],
     }
-    
+
     INFLUX_HELPER.add_metric(name="wifi", fields=wifi_fields, tags=COMMON_TAGS)
     INFLUX_HELPER.add_metric(name="device", fields=device_fields, tags=COMMON_TAGS)
     INFLUX_HELPER.send()
