@@ -27,7 +27,10 @@ class Patcher:
         Initialize the docker client.
         """
         self.docker = from_env()
-        self.image = self.docker.images.get("device-app:latest")
+        try:
+            self.image = self.docker.images.get("device-app:latest")
+        except errors.ImageNotFound:
+            self._build_service()
         try:
             self.container = self.docker.containers.get("device-app")
         except errors.NotFound:
