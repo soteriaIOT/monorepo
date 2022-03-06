@@ -45,7 +45,7 @@ def send_weather():
         "humidity": weather_data["main"]["humidity"],
         "wind_speed": weather_data["wind"]["speed"],
         "wind_deg": weather_data["wind"]["deg"],
-        "visibility": weather_data["main"]["visibility"],
+        "visibility": weather_data["visibility"],
     }
 
     if "gust" in weather_data["wind"]:
