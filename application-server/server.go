@@ -62,7 +62,7 @@ func main() {
 	router.Handle("/query", srv)
 
 	s := &http.Server{
-		Addr: ":" + defaultPort,
+		Addr: ":" + port,
 		Handler: router,
 	}
 	
