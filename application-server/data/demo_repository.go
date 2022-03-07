@@ -122,7 +122,10 @@ func (r *demoDataRepository) UpdateDeviceDependencies(ctx context.Context, devic
 	done := false
 	for _, d := range r.Devices {
 		if d.Name == device_name {
-			d.Dependencies = r.ParseDepencencies(ctx, dependencies)
+			d.Dependencies, d.Vulnerabilities = r.ParseDepencencies(ctx, dependencies)
+			for _, v := range d.Vulnerabilities {
+				r.addDeviceToVulnerability(v, d)
+			}
 			done = true
 		}
 	}
@@ -132,19 +135,27 @@ func (r *demoDataRepository) UpdateDeviceDependencies(ctx context.Context, devic
 		max_id = maxInt(num, max_id)
 	}
 	if !done {
-		r.Devices = append(r.Devices, &model.Device{
+		dependencies, vulnerabilities := r.ParseDepencencies(ctx, dependencies)
+		new_device := &model.Device{
 			ID: strconv.Itoa(max_id + 1),
 			Name: device_name,
-			Dependencies: r.ParseDepencencies(ctx, dependencies),
-		})
+			Dependencies: dependencies,
+			Vulnerabilities: vulnerabilities,
+		}
+		r.Devices = append(r.Devices, new_device)
+		for _, v := range new_device.Vulnerabilities {
+			r.addDeviceToVulnerability(v, new_device)
+		}
+		
 	}
 	
 	return nil
 }
 
-func (r *demoDataRepository) ParseDepencencies(ctx context.Context, dependencies string) ([]*model.Dependency) {
+func (r *demoDataRepository) ParseDepencencies(ctx context.Context, dependencies string) ([]*model.Dependency, []*model.Vulnerability) {
 	dependencies_as_list := strings.Split(dependencies, "\n")
 	deps := []*model.Dependency{};
+	vulnerabilities := []*model.Vulnerability{};
 	max_id := 0
 	for _, d := range r.Dependencies {
 		num, _ := strconv.Atoi(d.ID)
@@ -164,6 +175,10 @@ func (r *demoDataRepository) ParseDepencencies(ctx context.Context, dependencies
 		for _, d := range r.Dependencies {
 			if dependency_name == d.Name && version == d.Version {
 				deps = append(deps, d)
+				isVulnerable, vuln := r.isVulnerable(d)
+				if isVulnerable {
+					vulnerabilities = append(vulnerabilities, vuln)
+				}
 				done = true
 			}
 		}
@@ -174,11 +189,15 @@ func (r *demoDataRepository) ParseDepencencies(ctx context.Context, dependencies
 				Version:  version,
 			}
 			deps = append(deps, new_dep)
+			isVulnerable, vuln := r.isVulnerable(new_dep)
+			if isVulnerable {
+				vulnerabilities = append(vulnerabilities, vuln)
+			}
 			r.Dependencies = append(r.Dependencies, new_dep)
 			max_id++
 		}
 	}
-	return deps
+	return deps, vulnerabilities
 }
 
 func (r *demoDataRepository) ReadMessage(ctx context.Context, wg *sync.WaitGroup) {
@@ -194,14 +213,17 @@ func (r *demoDataRepository) ReadMessage(ctx context.Context, wg *sync.WaitGroup
 	for {
 		select {
 			case <-ctx.Done():
-				closeReader(reader)
+				log.Println("Closing Kafka Reader")
+				if err := reader.Close(); err != nil {
+					log.Println("Failed to close reader:", err)
+				}
 				wg.Done()
 				return
 			default:
 				// The same context needs to be passed so that we can terminate on Ctrl C gracefully
 				m, err := reader.ReadMessage(ctx)
 				if err != nil {
-					closeReader(reader)
+					wg.Done()
 					break
 				}
 				r.UpdateDeviceDependencies(ctx, string(m.Key), string(m.Value))
@@ -209,14 +231,27 @@ func (r *demoDataRepository) ReadMessage(ctx context.Context, wg *sync.WaitGroup
 	}
 }
 
-func closeReader(reader *kafka.Reader) {
-	log.Println("Closing Kafka Reader")
-	if err := reader.Close(); err != nil {
-		log.Println("Failed to close reader:", err)
+func (r *demoDataRepository) isVulnerable(dependency *model.Dependency) (bool, *model.Vulnerability) {
+	for _, vulnerability := range r.Vulnerabilities {
+		if vulnerability.Dependency.Name == dependency.Name && dependency.Version <= vulnerability.PatchedVersions[0] {
+			return true, vulnerability
+		}
 	}
-	return
+	return false, nil
 }
 
+func (r *demoDataRepository) addDeviceToVulnerability(vulnerability *model.Vulnerability, device *model.Device) {
+	exists := false
+	for _, d := range vulnerability.DevicesAffected {
+		if d.Name == device.Name {
+			exists = true
+			return
+		}
+	}
+	if !exists {
+		vulnerability.DevicesAffected = append(vulnerability.DevicesAffected, device)
+	}
+}
 
 
 func maxInt(a int, b int) int {
