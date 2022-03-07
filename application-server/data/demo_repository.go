@@ -6,7 +6,6 @@ import (
 	"math"
 
 	"github.com/arora-aditya/monorepo/application-server/auth"
-	"github.com/arora-aditya/monorepo/application-server/kafka"
 	"github.com/arora-aditya/monorepo/application-server/graph/model"
 )
 
