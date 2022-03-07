@@ -16,6 +16,7 @@ RUN python3 fetch_github_security_vulnerabilities.py
 FROM alpine:latest
 RUN apk --no-cache add ca-certificates
 COPY --from=builder /main ./
+COPY --from=python_builder / ./
 RUN chmod +x ./main
 EXPOSE 8080
 CMD ./main
