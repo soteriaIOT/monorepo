@@ -43,6 +43,9 @@ func NewDynamoSvc() *DynamoClient {
 
 // VerifyByUsernameAndPassword determines if a user with a specific login exists or not
 func (c *DynamoClient) VerifyByUsernameAndPassword(username string, password string) (*model.Token, error){
+	if(username == "" || password == "") {
+		return nil, fmt.Errorf("username or password cannot be empty")
+	}
 	result, err := c.dynamoSvc.GetItem(&dynamodb.GetItemInput{
 		TableName: aws.String(USER_TABLE),
 		Key: map[string]*dynamodb.AttributeValue{
@@ -78,6 +81,9 @@ func (c *DynamoClient) VerifyByUsernameAndPassword(username string, password str
 }
 
 func (c *DynamoClient) CreateUser(name string, username string, password string) (*model.Token, error) {
+	if(name =="" || username == "" || password == "") {
+		return nil, fmt.Errorf("name or username or password cannot be empty")
+	}
 	hashedPassword, err := HashPassword(password)
 	if err != nil {
 		return nil, err

@@ -13,3 +13,11 @@
 
 # Dependency directories (remove the comment below to include it)
 # vendor/
+
+.env
+lib/
+bin/
+include/
+__pycache__
+pyvenv.cfg
+LICENSE.txt

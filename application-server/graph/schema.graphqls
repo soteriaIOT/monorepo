@@ -64,4 +64,7 @@ type Token{
 type Mutation {
   createUser(input: User!): Token!
   login(input: Login!): Token!
+  # TODO: Update input and return values after kafka stuff is known
+  updateVulnerabilities(input: [ID!]!): [Vulnerability]!
+  checkVulnerabilities(input: [ID!]!): [Vulnerability]!
 }
