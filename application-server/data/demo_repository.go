@@ -78,8 +78,6 @@ func (r *demoDataRepository) UpdateVulnerabilities(ctx context.Context, ids []st
 }
 
 func (r *demoDataRepository) GetVulnerabilities(ctx context.Context, limit int, offset int) ([]*model.Vulnerability, error) {
-	fmt.Println(r.AllVulnerabilities[0])
-
 	user := auth.GetAuthFromContext(ctx)
 	if user.Username == "" {
 		return []*model.Vulnerability{}, fmt.Errorf("access denied")
@@ -198,7 +196,7 @@ func (r *demoDataRepository) ParseDepencencies(ctx context.Context, dependencies
 		for _, d := range r.Dependencies {
 			if dependency_name == d.Name && version == d.Version {
 				deps = append(deps, d)
-				isVulnerable, vuln := r.isVulnerable(d)
+				isVulnerable, vuln := vulnerability.IsVulnerable(d, r.AllVulnerabilities)
 				if isVulnerable {
 					vulnerabilities = append(vulnerabilities, vuln)
 				}
@@ -212,7 +210,7 @@ func (r *demoDataRepository) ParseDepencencies(ctx context.Context, dependencies
 				Version: version,
 			}
 			deps = append(deps, new_dep)
-			isVulnerable, vuln := r.isVulnerable(new_dep)
+			isVulnerable, vuln := vulnerability.IsVulnerable(new_dep, r.AllVulnerabilities)
 			if isVulnerable {
 				vulnerabilities = append(vulnerabilities, vuln)
 			}
@@ -256,15 +254,6 @@ func (r *demoDataRepository) ReadMessage(ctx context.Context, wg *sync.WaitGroup
 			r.UpdateDeviceDependencies(ctx, string(m.Key), string(m.Value))
 		}
 	}
-}
-
-func (r *demoDataRepository) isVulnerable(dependency *model.Dependency) (bool, *model.Vulnerability) {
-	for _, vulnerability := range r.Vulnerabilities {
-		if vulnerability.Dependency.Name == dependency.Name && dependency.Version <= vulnerability.PatchedVersions[0] {
-			return true, vulnerability
-		}
-	}
-	return false, nil
 }
 
 func (r *demoDataRepository) addDeviceToVulnerability(vulnerability *model.Vulnerability, device *model.Device) {
