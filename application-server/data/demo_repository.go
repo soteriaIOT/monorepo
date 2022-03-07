@@ -247,7 +247,7 @@ func (r *demoDataRepository) ReadMessage(ctx context.Context, wg *sync.WaitGroup
 						log.Println("Failed to close reader:", err)
 					}
 					wg.Done()
-					break
+					return
 				}
 				r.UpdateDeviceDependencies(ctx, string(m.Key), string(m.Value))
 		}
