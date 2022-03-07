@@ -44,12 +44,12 @@ type Vulnerability struct {
 	Summary            string      `json:"summary"`
 	PatchAvailable     bool        `json:"patch_available"`
 	KeyIsPatched       bool        `json:"key_is_patched"`
-	Name               string      `json:"name"`
+	Name               string      `json:"dependency-name"`
 	Dependency         *Dependency `json:"dependency"`
-	PatchedVersions    []string    `json:"patched_versions"`
-	UnaffectedVersions []string    `json:"unaffected_versions"`
-	AffectedVersions   []string    `json:"affected_versions"`
-	DevicesAffected    []*Device   `json:"devices_affected"`
+	PatchedVersions    []string    `json:"patched-versions"`
+	UnaffectedVersions []string    `json:"unaffected-versions"`
+	AffectedVersions   []string    `json:"affected-versions"`
+	DevicesAffected    []*Device   `json:"devices0affected"`
 }
 
 type Severity string
@@ -58,17 +58,19 @@ const (
 	SeverityLow      Severity = "LOW"
 	SeverityModerate Severity = "MODERATE"
 	SeverityHigh     Severity = "HIGH"
+	SeverityCritical Severity = "CRITICAL"
 )
 
 var AllSeverity = []Severity{
 	SeverityLow,
 	SeverityModerate,
 	SeverityHigh,
+	SeverityCritical,
 }
 
 func (e Severity) IsValid() bool {
 	switch e {
-	case SeverityLow, SeverityModerate, SeverityHigh:
+	case SeverityLow, SeverityModerate, SeverityHigh, SeverityCritical:
 		return true
 	}
 	return false
