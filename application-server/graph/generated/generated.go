@@ -96,7 +96,7 @@ type ComplexityRoot struct {
 type MutationResolver interface {
 	CreateUser(ctx context.Context, input model.User) (*model.Token, error)
 	Login(ctx context.Context, input model.Login) (*model.Token, error)
-	UpdateVulnerabilities(ctx context.Context, input []string) (bool, error)
+	UpdateVulnerabilities(ctx context.Context, input []string) ([]*model.Vulnerability, error)
 	CheckVulnerabilities(ctx context.Context, input []string) ([]*model.Vulnerability, error)
 }
 type QueryResolver interface {
@@ -521,7 +521,7 @@ type Mutation {
   createUser(input: User!): Token!
   login(input: Login!): Token!
   # TODO: Update input and return values after kafka stuff is known
-  updateVulnerabilities(input: [ID!]!): Boolean!
+  updateVulnerabilities(input: [ID!]!): [Vulnerability]!
   checkVulnerabilities(input: [ID!]!): [Vulnerability]!
 }
 `, BuiltIn: false},
@@ -1128,9 +1128,9 @@ func (ec *executionContext) _Mutation_updateVulnerabilities(ctx context.Context,
 		}
 		return graphql.Null
 	}
-	res := resTmp.(bool)
+	res := resTmp.([]*model.Vulnerability)
 	fc.Result = res
-	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
+	return ec.marshalNVulnerability2ᚕᚖgithubᚗcomᚋaroraᚑadityaᚋmonorepoᚋapplicationᚑserverᚋgraphᚋmodelᚐVulnerability(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Mutation_checkVulnerabilities(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {

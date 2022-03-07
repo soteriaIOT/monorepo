@@ -11,6 +11,7 @@ import (
 	"strings"
 
 	"github.com/arora-aditya/monorepo/application-server/auth"
+	"github.com/arora-aditya/monorepo/application-server/kafka_utils"
 	"github.com/arora-aditya/monorepo/application-server/graph/model"
 	"github.com/segmentio/kafka-go"
 )
@@ -55,6 +56,24 @@ func (r *demoDataRepository) GetVulnerability(ctx context.Context, name string) 
 	}
 	return nil, nil
 }
+
+func (r *demoDataRepository) UpdateVulnerabilities(ctx context.Context, ids []string) ([]*model.Vulnerability, error) {
+	user := auth.GetAuthFromContext(ctx)
+	if user.Username == "" {
+		return nil, fmt.Errorf("access denied")
+	}
+	for _, v := range r.Vulnerabilities {
+		for _, id := range ids {
+			if v.ID == id {
+				for _, d := range v.DevicesAffected {
+					kafka_utils.PushMessage(ctx, d.Name, v.Dependency.Name + "==" + v.PatchedVersions[0])
+				}	
+			}
+		}
+	}
+	return nil, nil
+}
+
 
 func (r *demoDataRepository) GetVulnerabilities(ctx context.Context, limit int, offset int) ([]*model.Vulnerability, error) {
 	user := auth.GetAuthFromContext(ctx)
@@ -223,6 +242,10 @@ func (r *demoDataRepository) ReadMessage(ctx context.Context, wg *sync.WaitGroup
 				// The same context needs to be passed so that we can terminate on Ctrl C gracefully
 				m, err := reader.ReadMessage(ctx)
 				if err != nil {
+					log.Println("Closing Kafka Reader")
+					if err := reader.Close(); err != nil {
+						log.Println("Failed to close reader:", err)
+					}
 					wg.Done()
 					break
 				}

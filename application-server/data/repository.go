@@ -10,6 +10,7 @@ import (
 type Repository interface {
 	GetVulnerability(ctx context.Context, id string) (*model.Vulnerability, error)
 	GetVulnerabilities(ctx context.Context, limit int, offset int) ([]*model.Vulnerability, error)
+	UpdateVulnerabilities(ctx context.Context, ids []string ) ([]*model.Vulnerability, error)
 
 	GetDependency(ctx context.Context, name string) (*model.Dependency, error)
 	GetDependencies(ctx context.Context, limit int, offset int) ([]*model.Dependency, error)
