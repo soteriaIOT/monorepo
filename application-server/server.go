@@ -19,7 +19,6 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/rs/cors"
 
-	"github.com/arora-aditya/monorepo/application-server/kafka"
 )
 
 const defaultPort = "8081"
@@ -32,7 +31,9 @@ func main() {
 
 	var wg sync.WaitGroup
 	wg.Add(1)
-	go kafka.ReadMessage(ctx, &wg)
+
+	d := data.NewDemoRepository()
+	go d.ReadMessage(ctx, &wg)
 
 	router := chi.NewRouter()
 
@@ -52,7 +53,7 @@ func main() {
 	}
 
 	r := &graph.Resolver{
-		Repository: data.NewDemoRepository(),
+		Repository: d,
 	}
 
 	srv := handler.NewDefaultServer(generated.NewExecutableSchema(generated.Config{Resolvers: r}))

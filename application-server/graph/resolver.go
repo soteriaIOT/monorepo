@@ -2,7 +2,9 @@ package graph
 
 //go:generate go run github.com/99designs/gqlgen generate
 
-import "github.com/arora-aditya/monorepo/application-server/data"
+import (
+	"github.com/arora-aditya/monorepo/application-server/data"
+)
 
 // This file will not be regenerated automatically.
 //

@@ -2,6 +2,7 @@ package data
 
 import (
 	"context"	
+	"sync"
 	"github.com/arora-aditya/monorepo/application-server/graph/model"
 )
 
@@ -18,4 +19,7 @@ type Repository interface {
 
 	Login(input model.Login) (*model.Token, error)
 	CreateUser(input model.User) (*model.Token, error)
+
+	UpdateDeviceDependencies(ctx context.Context, device_name string, dependencies string) error
+	ReadMessage(ctx context.Context, wg *sync.WaitGroup)
 }

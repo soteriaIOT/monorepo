@@ -3,10 +3,16 @@ package data
 import (
 	"context"
 	"fmt"
+	"log"
 	"math"
+	"os"
+	"sync"
+	"strconv"
+	"strings"
 
 	"github.com/arora-aditya/monorepo/application-server/auth"
 	"github.com/arora-aditya/monorepo/application-server/graph/model"
+	"github.com/segmentio/kafka-go"
 )
 
 func NewDemoRepository() Repository {
@@ -110,6 +116,111 @@ func (r *demoDataRepository) GetDevices(ctx context.Context, limit int, offset i
 	}
 	bound := minInt(offset+limit, len(r.Devices))
 	return r.Devices[offset:bound], nil
+}
+
+func (r *demoDataRepository) UpdateDeviceDependencies(ctx context.Context, device_name string, dependencies string) error {
+	done := false
+	for _, d := range r.Devices {
+		if d.Name == device_name {
+			d.Dependencies = r.ParseDepencencies(ctx, dependencies)
+			done = true
+		}
+	}
+	max_id := 0
+	for _, d := range r.Devices {
+		num, _ := strconv.Atoi(d.ID)
+		max_id = maxInt(num, max_id)
+	}
+	if !done {
+		r.Devices = append(r.Devices, &model.Device{
+			ID: strconv.Itoa(max_id + 1),
+			Name: device_name,
+			Dependencies: r.ParseDepencencies(ctx, dependencies),
+		})
+	}
+	
+	return nil
+}
+
+func (r *demoDataRepository) ParseDepencencies(ctx context.Context, dependencies string) ([]*model.Dependency) {
+	dependencies_as_list := strings.Split(dependencies, "\n")
+	deps := []*model.Dependency{};
+	max_id := 0
+	for _, d := range r.Dependencies {
+		num, _ := strconv.Atoi(d.ID)
+		max_id = maxInt(num, max_id)
+	}
+	for _, dependency_string := range dependencies_as_list {
+		parsed := strings.Split(dependency_string, "==")
+		dependency_name := ""
+		version := ""
+		if len(parsed) != 2 {
+			continue
+		} else {
+			dependency_name = parsed[0]
+			version = parsed[1]
+		}
+		done := false
+		for _, d := range r.Dependencies {
+			if dependency_name == d.Name && version == d.Version {
+				deps = append(deps, d)
+				done = true
+			}
+		}
+		if !done {
+			new_dep := &model.Dependency{
+				ID: strconv.Itoa(max_id + 1),
+				Name:     dependency_name,
+				Version:  version,
+			}
+			deps = append(deps, new_dep)
+			r.Dependencies = append(r.Dependencies, new_dep)
+			max_id++
+		}
+	}
+	return deps
+}
+
+func (r *demoDataRepository) ReadMessage(ctx context.Context, wg *sync.WaitGroup) {
+	reader := kafka.NewReader(kafka.ReaderConfig{
+		Brokers:   []string{os.Getenv("KAFKA_IP")},
+		// No groupID because we want to parse all the messages from the topic
+		// and come back to current state on every restart since our memory gets restart on reboot
+		// GroupID:   "application-server",
+		Topic:     "device-requirements",
+		MinBytes:  10e2, // 10KB
+		MaxBytes:  10e6, // 10MB
+	})
+	for {
+		select {
+			case <-ctx.Done():
+				closeReader(reader)
+				wg.Done()
+				return
+			default:
+				// The same context needs to be passed so that we can terminate on Ctrl C gracefully
+				m, err := reader.ReadMessage(ctx)
+				if err != nil {
+					closeReader(reader)
+					break
+				}
+				r.UpdateDeviceDependencies(ctx, string(m.Key), string(m.Value))
+		}
+	}
+}
+
+func closeReader(reader *kafka.Reader) {
+	log.Println("Closing Kafka Reader")
+	if err := reader.Close(); err != nil {
+		log.Println("Failed to close reader:", err)
+	}
+	return
+}
+
+
+
+func maxInt(a int, b int) int {
+	return int(math.Max(float64(a), float64(b)))
 }
 
 func minInt(a int, b int) int {
