@@ -1,4 +1,3 @@
-EXPOSE $GITHUB_TOKEN
 # Build the Go API
 FROM golang:latest AS builder
 ADD . /app
