@@ -9,7 +9,7 @@ RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags "-w" -a -o /main .
 FROM python:alpine AS python_builder
 COPY --from=builder /app/vulnerability/query_github ./
 RUN pip3 install -r requirements.txt
-CMD python3 fetch_github_security_vulnerabilities.py &
+RUN python3 fetch_github_security_vulnerabilities.py
 
 # Final stage build, this will be the container
 # that we will deploy to production
