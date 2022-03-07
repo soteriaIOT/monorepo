@@ -1,6 +1,10 @@
 from typing import List
 from typing import Union
 
+from signal import signal
+from signal import SIGINT
+from signal import SIGTERM
+
 from kafka import KafkaProducer
 from confluent_kafka import Consumer
 from dotenv import dotenv_values
@@ -21,18 +25,24 @@ def consume_confluence(topic: str):
         }
     )
     consumer.subscribe([topic])
+    signal(SIGINT, lambda s, f: consumer.close())
+    signal(SIGTERM, lambda s, f: consumer.close())
     while True:
         try:
             msg = consumer.poll(1.0)
+            msg = None
             if msg is None:
                 continue
             if msg.error():
                 print("Consumer error: {}".format(msg.error()))
                 continue
             yield msg
+        except KeyboardInterrupt as e:
+            break
         except Exception as e:
             print(e)
-            return
+            break
+    consumer.close()
 
 
 def produce_message(topic: str, key: str, value: Union[str, List]):
