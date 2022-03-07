@@ -6,13 +6,14 @@ import (
 	"log"
 	"math"
 	"os"
-	"sync"
 	"strconv"
 	"strings"
+	"sync"
 
 	"github.com/arora-aditya/monorepo/application-server/auth"
-	"github.com/arora-aditya/monorepo/application-server/kafka_utils"
 	"github.com/arora-aditya/monorepo/application-server/graph/model"
+	"github.com/arora-aditya/monorepo/application-server/kafka_utils"
+	"github.com/arora-aditya/monorepo/application-server/vulnerability"
 	"github.com/segmentio/kafka-go"
 )
 
@@ -22,16 +23,18 @@ func NewDemoRepository() Repository {
 	}
 
 	return &demoDataRepository{
-		Dependencies:    append(vulnerable_dependencies, good_dependencies...),
-		Vulnerabilities: vulnerabilities,
-		Devices:         append(vulnerable_devices, good_devices...),
+		Dependencies:       append(vulnerable_dependencies, good_dependencies...),
+		Vulnerabilities:    vulnerabilities,
+		AllVulnerabilities: vulnerability.GetAllVulnerabilities(),
+		Devices:            append(vulnerable_devices, good_devices...),
 	}
 }
 
 type demoDataRepository struct {
-	Vulnerabilities []*model.Vulnerability
-	Dependencies    []*model.Dependency
-	Devices         []*model.Device
+	Vulnerabilities    []*model.Vulnerability
+	AllVulnerabilities []*model.Vulnerability
+	Dependencies       []*model.Dependency
+	Devices            []*model.Device
 }
 
 func (r *demoDataRepository) Login(input model.Login) (*model.Token, error) {
@@ -66,16 +69,17 @@ func (r *demoDataRepository) UpdateVulnerabilities(ctx context.Context, ids []st
 		for _, id := range ids {
 			if v.ID == id {
 				for _, d := range v.DevicesAffected {
-					kafka_utils.PushMessage(ctx, d.Name, v.Dependency.Name + "==" + v.PatchedVersions[0])
-				}	
+					kafka_utils.PushMessage(ctx, d.Name, v.Dependency.Name+"=="+v.PatchedVersions[0])
+				}
 			}
 		}
 	}
 	return nil, nil
 }
 
-
 func (r *demoDataRepository) GetVulnerabilities(ctx context.Context, limit int, offset int) ([]*model.Vulnerability, error) {
+	fmt.Println(r.AllVulnerabilities[0])
+
 	user := auth.GetAuthFromContext(ctx)
 	if user.Username == "" {
 		return []*model.Vulnerability{}, fmt.Errorf("access denied")
@@ -156,25 +160,25 @@ func (r *demoDataRepository) UpdateDeviceDependencies(ctx context.Context, devic
 	if !done {
 		dependencies, vulnerabilities := r.ParseDepencencies(ctx, dependencies)
 		new_device := &model.Device{
-			ID: strconv.Itoa(max_id + 1),
-			Name: device_name,
-			Dependencies: dependencies,
+			ID:              strconv.Itoa(max_id + 1),
+			Name:            device_name,
+			Dependencies:    dependencies,
 			Vulnerabilities: vulnerabilities,
 		}
 		r.Devices = append(r.Devices, new_device)
 		for _, v := range new_device.Vulnerabilities {
 			r.addDeviceToVulnerability(v, new_device)
 		}
-		
+
 	}
-	
+
 	return nil
 }
 
 func (r *demoDataRepository) ParseDepencencies(ctx context.Context, dependencies string) ([]*model.Dependency, []*model.Vulnerability) {
 	dependencies_as_list := strings.Split(dependencies, "\n")
-	deps := []*model.Dependency{};
-	vulnerabilities := []*model.Vulnerability{};
+	deps := []*model.Dependency{}
+	vulnerabilities := []*model.Vulnerability{}
 	max_id := 0
 	for _, d := range r.Dependencies {
 		num, _ := strconv.Atoi(d.ID)
@@ -203,9 +207,9 @@ func (r *demoDataRepository) ParseDepencencies(ctx context.Context, dependencies
 		}
 		if !done {
 			new_dep := &model.Dependency{
-				ID: strconv.Itoa(max_id + 1),
-				Name:     dependency_name,
-				Version:  version,
+				ID:      strconv.Itoa(max_id + 1),
+				Name:    dependency_name,
+				Version: version,
 			}
 			deps = append(deps, new_dep)
 			isVulnerable, vuln := r.isVulnerable(new_dep)
@@ -221,35 +225,35 @@ func (r *demoDataRepository) ParseDepencencies(ctx context.Context, dependencies
 
 func (r *demoDataRepository) ReadMessage(ctx context.Context, wg *sync.WaitGroup) {
 	reader := kafka.NewReader(kafka.ReaderConfig{
-		Brokers:   []string{os.Getenv("KAFKA_IP")},
+		Brokers: []string{os.Getenv("KAFKA_IP")},
 		// No groupID because we want to parse all the messages from the topic
 		// and come back to current state on every restart since our memory gets restart on reboot
 		// GroupID:   "application-server",
-		Topic:     "device-requirements",
-		MinBytes:  10e2, // 10KB
-		MaxBytes:  10e6, // 10MB
+		Topic:    "device-requirements",
+		MinBytes: 10e2, // 10KB
+		MaxBytes: 10e6, // 10MB
 	})
 	for {
 		select {
-			case <-ctx.Done():
+		case <-ctx.Done():
+			log.Println("Closing Kafka Reader")
+			if err := reader.Close(); err != nil {
+				log.Println("Failed to close reader:", err)
+			}
+			wg.Done()
+			return
+		default:
+			// The same context needs to be passed so that we can terminate on Ctrl C gracefully
+			m, err := reader.ReadMessage(ctx)
+			if err != nil {
 				log.Println("Closing Kafka Reader")
 				if err := reader.Close(); err != nil {
 					log.Println("Failed to close reader:", err)
 				}
 				wg.Done()
 				return
-			default:
-				// The same context needs to be passed so that we can terminate on Ctrl C gracefully
-				m, err := reader.ReadMessage(ctx)
-				if err != nil {
-					log.Println("Closing Kafka Reader")
-					if err := reader.Close(); err != nil {
-						log.Println("Failed to close reader:", err)
-					}
-					wg.Done()
-					return
-				}
-				r.UpdateDeviceDependencies(ctx, string(m.Key), string(m.Value))
+			}
+			r.UpdateDeviceDependencies(ctx, string(m.Key), string(m.Value))
 		}
 	}
 }
@@ -275,7 +279,6 @@ func (r *demoDataRepository) addDeviceToVulnerability(vulnerability *model.Vulne
 		vulnerability.DevicesAffected = append(vulnerability.DevicesAffected, device)
 	}
 }
-
 
 func maxInt(a int, b int) int {
 	return int(math.Max(float64(a), float64(b)))
