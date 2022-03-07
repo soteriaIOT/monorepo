@@ -121,7 +121,7 @@ var (
 			KeyIsPatched:           false,
 			Dependency: 		    vulnerable_dependencies[2],
 			Name:                    "CVE-2021-33503",
-			PatchedVersions:        []string{"1.26.4"},
+			PatchedVersions:        []string{"1.26.5"},
 			UnaffectedVersions:     []string{},
 			AffectedVersions:       []string{"< 1.26.5"},
 			DevicesAffected: 		vulnerable_devices,

@@ -6,6 +6,7 @@ import (
 	"math"
 
 	"github.com/arora-aditya/monorepo/application-server/auth"
+	"github.com/arora-aditya/monorepo/application-server/kafka"
 	"github.com/arora-aditya/monorepo/application-server/graph/model"
 )
 
@@ -24,7 +25,7 @@ func NewDemoRepository() Repository {
 type demoDataRepository struct {
 	Vulnerabilities []*model.Vulnerability
 	Dependencies    []*model.Dependency
-	Devices         []*model.Deviceg
+	Devices         []*model.Device
 }
 
 func (r *demoDataRepository) Login(input model.Login) (*model.Token, error) {
