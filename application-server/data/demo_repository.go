@@ -1,10 +1,9 @@
 package data
 
 import (
-	"math"
-	"fmt"
 	"context"
-	
+	"fmt"
+	"math"
 
 	"github.com/arora-aditya/monorepo/application-server/auth"
 	"github.com/arora-aditya/monorepo/application-server/graph/model"
@@ -25,7 +24,7 @@ func NewDemoRepository() Repository {
 type demoDataRepository struct {
 	Vulnerabilities []*model.Vulnerability
 	Dependencies    []*model.Dependency
-	Devices         []*model.Device
+	Devices         []*model.Deviceg
 }
 
 func (r *demoDataRepository) Login(input model.Login) (*model.Token, error) {
