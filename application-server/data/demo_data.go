@@ -104,7 +104,7 @@ var (
 			PatchAvailable:     false,
 			KeyIsPatched:       false,
 			Dependency:         vulnerable_dependencies[0],
-			Name:               "CVE-2022-23651",
+			Name:               vulnerable_dependencies[0].Name,
 			PatchedVersions:    []string{"1.14.1"},
 			UnaffectedVersions: []string{},
 			AffectedVersions:   []string{"< 1.14.1"},
@@ -118,7 +118,7 @@ var (
 			PatchAvailable:     true,
 			KeyIsPatched:       false,
 			Dependency:         vulnerable_dependencies[2],
-			Name:               "CVE-2021-33503",
+			Name:               vulnerable_dependencies[2].Name,
 			PatchedVersions:    []string{"1.26.5"},
 			UnaffectedVersions: []string{},
 			AffectedVersions:   []string{"< 1.26.5"},
@@ -126,6 +126,6 @@ var (
 		},
 	}
 
-	// This will be dynamically populated on start up
+	// This is the parsed JSON file that we fetch from dependabot
 	all_vulnerabilities []*model.Vulnerability = []*model.Vulnerability{}
 )
