@@ -65,6 +65,23 @@ func (r *demoDataRepository) UpdateVulnerabilities(ctx context.Context, ids []st
 	if user.Username == "" {
 		return nil, fmt.Errorf("access denied")
 	}
+	for i := 0; i < len(r.Vulnerabilities); i++ {
+		v := r.Vulnerabilities[i]
+		pushed_message := false
+		for _, id := range ids {
+			if v.ID == id {
+				for _, d := range v.DevicesAffected {
+					kafka_utils.PushMessage(ctx, d.Name, v.Dependency.Name+"=="+v.PatchedVersions[0])
+				}
+				pushed_message = true
+			}
+		}
+		if pushed_message {
+			r.Vulnerabilities = append(r.Vulnerabilities[:i], r.Vulnerabilities[i+1:]...)
+			i--
+		}
+	}
+
 	for _, v := range r.Vulnerabilities {
 		for _, id := range ids {
 			if v.ID == id {
