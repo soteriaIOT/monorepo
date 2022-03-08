@@ -111,7 +111,7 @@ var (
 			DevicesAffected:    vulnerable_devices,
 		},
 		{
-			ID:                 "954",
+			ID:                 "1675",
 			Permalink:          "https://github.com/advisories/GHSA-q2q7-5pp4-w6pg",
 			Severity:           "HIGH",
 			Summary:            "Catastrophic backtracking in URL authority parser when passed URL containing many @ characters",

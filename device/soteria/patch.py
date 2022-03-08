@@ -27,10 +27,7 @@ class Patcher:
         Initialize the docker client.
         """
         self.docker = from_env()
-        try:
-            self.image = self.docker.images.get("device-app:latest")
-        except errors.ImageNotFound:
-            self._build_service()
+        self._build_service()
         try:
             self.container = self.docker.containers.get("device-app")
         except errors.NotFound:
@@ -93,6 +90,8 @@ class Patcher:
         
         REQUIREMENTS = self._read_requirements()
         produce_message(DEVICE_REQUIREMENTS, DEVICE_ID, REQUIREMENTS)
+        print("Starting requirements", REQUIREMENTS)
+    
         for message in consume_confluence(DEVICE_UPDATES):
             key = message.key()
             value = message.value()
@@ -102,13 +101,13 @@ class Patcher:
                 print("Exception: {}".format(e))
                 continue
             if str(device) == DEVICE_ID:
-                print("Got update for device:", device, package_and_version)
                 package, version = package_and_version.split("==")
+                print("Got update for device:", device, package, version)
                 updated_requirements = "\n".join(
                     [
-                        line
-                        if not line.split("==")[0] == package
-                        else "{}=={}".format(package, version)
+                        "{}=={}".format(package, version)
+                        if line.split("==")[0] == package
+                        else line
                         for line in REQUIREMENTS
                     ]
                 )
