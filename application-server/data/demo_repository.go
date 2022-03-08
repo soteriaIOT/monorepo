@@ -82,15 +82,6 @@ func (r *demoDataRepository) UpdateVulnerabilities(ctx context.Context, ids []st
 		}
 	}
 
-	for _, v := range r.Vulnerabilities {
-		for _, id := range ids {
-			if v.ID == id {
-				for _, d := range v.DevicesAffected {
-					kafka_utils.PushMessage(ctx, d.Name, v.Dependency.Name+"=="+v.PatchedVersions[0])
-				}
-			}
-		}
-	}
 	return nil, nil
 }
 
@@ -274,16 +265,21 @@ func (r *demoDataRepository) ReadMessage(ctx context.Context, wg *sync.WaitGroup
 }
 
 func (r *demoDataRepository) addDeviceToVulnerability(vulnerability *model.Vulnerability, device *model.Device) {
-	exists := false
-	for _, d := range vulnerability.DevicesAffected {
-		if d.Name == device.Name {
-			exists = true
-			return
+	for _, v:= range r.Vulnerabilities {
+		if v.ID == vulnerability.ID {
+			exists := false
+			for _, d := range v.DevicesAffected {
+				if d.Name == device.Name {
+					exists = true
+					return
+				}
+			}
+			if !exists {
+				v.DevicesAffected = append(v.DevicesAffected, device)
+			}
 		}
 	}
-	if !exists {
-		vulnerability.DevicesAffected = append(vulnerability.DevicesAffected, device)
-	}
+	
 }
 
 func maxInt(a int, b int) int {
