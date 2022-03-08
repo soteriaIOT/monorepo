@@ -97,7 +97,7 @@ var (
 
 	vulnerabilities []*model.Vulnerability = []*model.Vulnerability{
 		{
-			ID:                 "1",
+			ID:                 "28",
 			Permalink:          "https://github.com/advisories/GHSA-p867-fxfr-ph2w",
 			Severity:           "MODERATE",
 			Summary:            "b2-sdk-python TOCTOU application key disclosure",
@@ -111,7 +111,7 @@ var (
 			DevicesAffected:    vulnerable_devices,
 		},
 		{
-			ID:                 "2",
+			ID:                 "954",
 			Permalink:          "https://github.com/advisories/GHSA-q2q7-5pp4-w6pg",
 			Severity:           "HIGH",
 			Summary:            "Catastrophic backtracking in URL authority parser when passed URL containing many @ characters",
