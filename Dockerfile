@@ -13,9 +13,10 @@ RUN apk --no-cache add ca-certificates
 COPY --from=builder /main ./
 RUN chmod +x ./main
 EXPOSE 8080
-RUN apk add --update --no-cache python3 && ln -sf python3 /usr/bin/python
-RUN python3 -m ensurepip
-RUN pip3 install --no-cache --upgrade pip setuptools
-RUN pip3 install -r vulnerability/query_github/requirements.txt
-CMD ./main & python3 vulnerability/query_github/fetch_github_security_vulnerabilities.py
+# RUN apk add --update --no-cache python3 && ln -sf python3 /usr/bin/python
+# RUN python3 -m ensurepip
+# RUN pip3 install --no-cache --upgrade pip setuptools
+# RUN pip3 install -r vulnerability/query_github/requirements.txt
+CMD ./main
+# & python3 vulnerability/query_github/fetch_github_security_vulnerabilities.py
 
