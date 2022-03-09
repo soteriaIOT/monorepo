@@ -1,5 +1,5 @@
 COMMON_TAGS = {
     "device": "macos",
-    "host": "testing0001",
+    "host": "testing00001",
     "location": "University of Waterloo",
 }

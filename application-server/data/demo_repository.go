@@ -18,15 +18,11 @@ import (
 )
 
 func NewDemoRepository() Repository {
-	for _, s := range vulnerable_devices {
-		s.Vulnerabilities = vulnerabilities
-	}
-
 	return &demoDataRepository{
-		Dependencies:       append(vulnerable_dependencies, good_dependencies...),
+		Dependencies:       dependencies,
 		Vulnerabilities:    vulnerabilities,
 		AllVulnerabilities: vulnerability.GetAllVulnerabilities(),
-		Devices:            append(vulnerable_devices, good_devices...),
+		Devices:            devices,
 	}
 }
 
@@ -65,20 +61,13 @@ func (r *demoDataRepository) UpdateVulnerabilities(ctx context.Context, ids []st
 	if user.Username == "" {
 		return nil, fmt.Errorf("access denied")
 	}
-	for i := 0; i < len(r.Vulnerabilities); i++ {
-		v := r.Vulnerabilities[i]
-		pushed_message := false
+	for _, v := range r.Vulnerabilities {
 		for _, id := range ids {
 			if v.ID == id {
 				for _, d := range v.DevicesAffected {
 					kafka_utils.PushMessage(ctx, d.Name, v.Dependency.Name+"=="+v.PatchedVersions[0])
 				}
-				pushed_message = true
 			}
-		}
-		if pushed_message {
-			r.Vulnerabilities = append(r.Vulnerabilities[:i], r.Vulnerabilities[i+1:]...)
-			i--
 		}
 	}
 
@@ -147,23 +136,36 @@ func (r *demoDataRepository) GetDevices(ctx context.Context, limit int, offset i
 	return r.Devices[offset:bound], nil
 }
 
+func LogDeviceDependenciesVulnerabilities(ctx context.Context, device_name string, dependencies []*model.Dependency, vulnerabilities []*model.Vulnerability) {
+	fmt.Printf("Device: %s\n", device_name)
+	for _, d := range dependencies {
+		fmt.Printf("Dependency: %s==%s\n", d.Name, d.Version)
+	}
+	for _, v := range vulnerabilities {
+		fmt.Printf("Vulnerability: %s==%s\n", v.Dependency.Name, v.PatchedVersions[0])
+	}
+}
+
 func (r *demoDataRepository) UpdateDeviceDependencies(ctx context.Context, device_name string, dependencies string) error {
 	done := false
 	for _, d := range r.Devices {
 		if d.Name == device_name {
 			d.Dependencies, d.Vulnerabilities = r.ParseDepencencies(ctx, dependencies)
+			LogDeviceDependenciesVulnerabilities(ctx, device_name, d.Dependencies, d.Vulnerabilities)
+			r.removeDeviceFromVulnerabilitiesNoLongerApplicable(d, d.Vulnerabilities)
 			for _, v := range d.Vulnerabilities {
 				r.addDeviceToVulnerability(v, d)
 			}
 			done = true
+			break
 		}
 	}
-	max_id := 0
-	for _, d := range r.Devices {
-		num, _ := strconv.Atoi(d.ID)
-		max_id = maxInt(num, max_id)
-	}
 	if !done {
+		max_id := 0
+		for _, d := range r.Devices {
+			num, _ := strconv.Atoi(d.ID)
+			max_id = maxInt(num, max_id)
+		}
 		dependencies, vulnerabilities := r.ParseDepencencies(ctx, dependencies)
 		new_device := &model.Device{
 			ID:              strconv.Itoa(max_id + 1),
@@ -172,11 +174,16 @@ func (r *demoDataRepository) UpdateDeviceDependencies(ctx context.Context, devic
 			Vulnerabilities: vulnerabilities,
 		}
 		r.Devices = append(r.Devices, new_device)
+
+		LogDeviceDependenciesVulnerabilities(ctx, device_name, new_device.Dependencies, new_device.Vulnerabilities)
+
 		for _, v := range new_device.Vulnerabilities {
 			r.addDeviceToVulnerability(v, new_device)
 		}
 
 	}
+
+	
 
 	return nil
 }
@@ -204,10 +211,8 @@ func (r *demoDataRepository) ParseDepencencies(ctx context.Context, dependencies
 		for _, d := range r.Dependencies {
 			if dependency_name == d.Name && version == d.Version {
 				deps = append(deps, d)
-				isVulnerable, vuln := vulnerability.IsVulnerable(d, r.AllVulnerabilities)
-				if isVulnerable {
-					vulnerabilities = append(vulnerabilities, vuln)
-				}
+				vulns := vulnerability.IsVulnerable(d, r.AllVulnerabilities)
+				vulnerabilities = append(vulnerabilities, vulns...)
 				done = true
 			}
 		}
@@ -218,10 +223,8 @@ func (r *demoDataRepository) ParseDepencencies(ctx context.Context, dependencies
 				Version: version,
 			}
 			deps = append(deps, new_dep)
-			isVulnerable, vuln := vulnerability.IsVulnerable(new_dep, r.AllVulnerabilities)
-			if isVulnerable {
-				vulnerabilities = append(vulnerabilities, vuln)
-			}
+			vulns := vulnerability.IsVulnerable(new_dep, r.AllVulnerabilities)
+			vulnerabilities = append(vulnerabilities, vulns...)
 			r.Dependencies = append(r.Dependencies, new_dep)
 			max_id++
 		}
@@ -264,9 +267,28 @@ func (r *demoDataRepository) ReadMessage(ctx context.Context, wg *sync.WaitGroup
 	}
 }
 
+func (r *demoDataRepository) removeDeviceFromVulnerabilitiesNoLongerApplicable(device *model.Device, vulnerabilities []*model.Vulnerability){
+	// remove device from vulnerabilities that are no longer applicable
+	for _, rv := range r.Vulnerabilities {
+		found := false
+		for _, v := range vulnerabilities {
+			if v.ID == rv.ID {
+				found = true
+				break
+			}
+		}
+		if !found {
+			r.removeDeviceFromVulnerability(rv, device)
+		}
+	}
+}
+
+
 func (r *demoDataRepository) addDeviceToVulnerability(vulnerability *model.Vulnerability, device *model.Device) {
+	added_to_vulnerability := false
 	for _, v:= range r.Vulnerabilities {
 		if v.ID == vulnerability.ID {
+			added_to_vulnerability = true
 			exists := false
 			for _, d := range v.DevicesAffected {
 				if d.Name == device.Name {
@@ -279,7 +301,42 @@ func (r *demoDataRepository) addDeviceToVulnerability(vulnerability *model.Vulne
 			}
 		}
 	}
-	
+	// if we didn't find the vulnerability in our list, add it
+	if !added_to_vulnerability {
+		added_device_to_vulnerability := false
+		for _, d := range vulnerability.DevicesAffected {
+			if d.Name == device.Name {
+				added_device_to_vulnerability = true
+				break
+			}
+		}
+		if !added_device_to_vulnerability {
+			vulnerability.DevicesAffected = append(vulnerability.DevicesAffected, device)
+		}
+		r.Vulnerabilities = append(r.Vulnerabilities, vulnerability)
+	}
+}
+
+func (r *demoDataRepository) removeDeviceFromVulnerability(vulnerability *model.Vulnerability, device *model.Device) {
+	// remove device from vulnerability
+	for _, v := range r.Vulnerabilities {
+		if v.ID == vulnerability.ID {
+			for j, d := range v.DevicesAffected {
+				if d.Name == device.Name {
+					v.DevicesAffected = append(v.DevicesAffected[:j], v.DevicesAffected[j+1:]...)
+					// delete vulnerability if no devices are affected
+					if len(v.DevicesAffected) == 0 {
+						for i, v := range r.Vulnerabilities {
+							if v.ID == vulnerability.ID {
+								r.Vulnerabilities = append(r.Vulnerabilities[:i], r.Vulnerabilities[i+1:]...)
+								break
+							}
+						}
+					}
+				}
+			}
+		}
+	}
 }
 
 func maxInt(a int, b int) int {

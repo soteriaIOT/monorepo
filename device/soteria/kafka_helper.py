@@ -16,11 +16,11 @@ config = dotenv_values()
 KAFKA_IP = config.get("kafka_ip")
 
 
-def consume_confluence(topic: str):
+def consume_confluence(topic: str, group_id: str = DEVICE_ID):
     consumer = Consumer(
         {
             "bootstrap.servers": KAFKA_IP,
-            "group.id": DEVICE_ID,
+            "group.id": group_id,
             "auto.offset.reset": "earliest",
         }
     )
@@ -30,7 +30,6 @@ def consume_confluence(topic: str):
     while True:
         try:
             msg = consumer.poll(1.0)
-            msg = None
             if msg is None:
                 continue
             if msg.error():

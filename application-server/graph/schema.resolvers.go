@@ -37,14 +37,6 @@ func (r *queryResolver) Vulnerabilities(ctx context.Context, limit int, offset i
 	return r.Repository.GetVulnerabilities(ctx, limit, offset)
 }
 
-func (r *queryResolver) Dependency(ctx context.Context, id string) (*model.Dependency, error) {
-	return r.Repository.GetDependency(ctx, id)
-}
-
-func (r *queryResolver) Dependencies(ctx context.Context, limit int, offset int) ([]*model.Dependency, error) {
-	return r.Repository.GetDependencies(ctx, limit, offset)
-}
-
 func (r *queryResolver) Device(ctx context.Context, id string) (*model.Device, error) {
 	return r.Repository.GetDevice(ctx, id)
 }
